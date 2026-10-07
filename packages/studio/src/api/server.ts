@@ -175,14 +175,25 @@ import {
 
 // -- Studio server language (read per request from the project config's `language`) --
 
-type StudioLanguage = "zh" | "en";
+type StudioLanguage = "zh" | "en" | "vi";
 
 function normalizeStudioLanguage(value: unknown): StudioLanguage {
-  return value === "en" ? "en" : "zh";
+  if (value === "en") return "en";
+  if (value === "vi") return "vi";
+  return "zh";
 }
 
-function pick(lang: StudioLanguage, zh: string, en: string): string {
-  return lang === "en" ? en : zh;
+// vi optional: copy not yet translated falls back to en instead of breaking callers.
+function pick(lang: StudioLanguage, zh: string, en: string, vi?: string): string {
+  if (lang === "en") return en;
+  if (lang === "vi") return vi ?? en;
+  return zh;
+}
+
+// Story-generation agents only understand zh/en content language so far (vi content
+// writing is a separate, not-yet-done effort). UI language "vi" falls back to "en" here.
+function toContentLanguage(lang: StudioLanguage): "zh" | "en" {
+  return lang === "en" || lang === "vi" ? "en" : "zh";
 }
 
 async function resolveStudioProfileSkills(
@@ -1176,7 +1187,7 @@ async function executeConfirmedProductionAction(args: {
     const payload = actionPayload?.createBook;
     const title = requirePayloadText(payload?.title, pick(lang, "确认建书缺少书名，请重新生成确认卡。", "The book creation confirmation is missing a title. Regenerate the confirmation card."));
     tool = createBookFoundationTool(args.pipeline, {
-      language: lang,
+      language: toContentLanguage(lang),
       actionPayload,
       workerSkills: (worker) => worker === "architect" ? profileSkills("longform-novel") : [],
     });
@@ -1195,7 +1206,7 @@ async function executeConfirmedProductionAction(args: {
     if (!direction) throw new ApiError(400, "CONFIRMED_ACTION_PAYLOAD_INCOMPLETE", pick(lang, "确认短篇缺少方向，请重新生成确认卡。", "The short fiction confirmation is missing a direction. Regenerate the confirmation card."));
     tool = createShortFictionRunTool(args.pipeline, args.root, {
       actionPayload,
-      language: lang,
+      language: toContentLanguage(lang),
       defaultSkills: profileSkills("short-fiction"),
     });
     params = {
@@ -1212,7 +1223,7 @@ async function executeConfirmedProductionAction(args: {
     }
     const chapterCount = actionPayload?.writeNext?.chapterCount ?? 1;
     tool = createWriteChaptersTool(args.pipeline, args.bookId, {
-      language: lang,
+      language: toContentLanguage(lang),
       workerSkills: (worker) => (
         worker === "auditor" || worker === "reviser"
           ? profileSkills("longform-novel", true)
@@ -1240,7 +1251,7 @@ async function executeConfirmedProductionAction(args: {
     const title = requirePayloadText(payload?.title, pick(lang, "确认创建剧本缺少标题，请重新生成确认卡。", "The script creation confirmation is missing a title. Regenerate the confirmation card."));
     tool = createScriptCreationTool(args.pipeline, args.root, {
       actionPayload,
-      language: lang,
+      language: toContentLanguage(lang),
       defaultSkills: profileSkills("script"),
     });
     params = {
@@ -1260,7 +1271,7 @@ async function executeConfirmedProductionAction(args: {
     const title = requirePayloadText(payload?.title, pick(lang, "确认创建分镜缺少标题，请重新生成确认卡。", "The storyboard creation confirmation is missing a title. Regenerate the confirmation card."));
     tool = createStoryboardCreationTool(args.pipeline, args.root, {
       actionPayload,
-      language: lang,
+      language: toContentLanguage(lang),
       defaultSkills: profileSkills("storyboard"),
     });
     params = {
@@ -1281,7 +1292,7 @@ async function executeConfirmedProductionAction(args: {
     const title = requirePayloadText(payload?.title, pick(lang, "确认创建互动影游缺少标题，请重新生成确认卡。", "The interactive film confirmation is missing a title. Regenerate the confirmation card."));
     tool = createInteractiveFilmCreationTool(args.pipeline, args.root, {
       actionPayload,
-      language: lang,
+      language: toContentLanguage(lang),
       defaultSkills: profileSkills("interactive-film"),
     });
     params = {
@@ -1428,7 +1439,7 @@ async function executeConfirmedProductionAction(args: {
       : undefined;
     tool = createPlayStartTool(args.pipeline, args.root, args.sessionId, args.playMode, {
       actionPayload: confirmedActionPayload,
-      language: lang,
+      language: toContentLanguage(lang),
       defaultSkills: profileSkills("interactive-world"),
     });
     params = {
@@ -1448,7 +1459,7 @@ async function executeConfirmedProductionAction(args: {
     const deps = filmLLMDepsFromClient(agentCtx.client, agentCtx.model, {
       activatedSkills: () => profileSkills("interactive-film"),
     });
-    tool = createDraftStructureTool(args.root, projectId, deps, lang);
+    tool = createDraftStructureTool(args.root, projectId, deps, toContentLanguage(lang));
     params = {
       instruction: payload?.instruction?.trim() || args.instruction,
     };
@@ -4122,7 +4133,7 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
       if (updates.stream !== undefined) {
         existing.llm.stream = updates.stream;
       }
-      if (updates.language === "zh" || updates.language === "en") {
+      if (updates.language === "zh" || updates.language === "en" || updates.language === "vi") {
         existing.language = updates.language;
       }
       const { writeFile: writeFileFs } = await import("node:fs/promises");
@@ -5527,7 +5538,7 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
   // --- Language setup ---
 
   app.post("/api/v1/project/language", async (c) => {
-    const { language } = await c.req.json<{ language: "zh" | "en" }>();
+    const { language } = await c.req.json<{ language: "zh" | "en" | "vi" }>();
     const configPath = join(root, "inkos.json");
     try {
       const raw = await readFile(configPath, "utf-8");

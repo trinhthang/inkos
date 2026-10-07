@@ -1,10 +1,10 @@
 import { useState } from "react";
 
-export function LanguageSelector({ onSelect }: { onSelect: (lang: "zh" | "en") => void }) {
-  const [hovering, setHovering] = useState<"zh" | "en" | null>(null);
-  const [selected, setSelected] = useState<"zh" | "en" | null>(null);
+export function LanguageSelector({ onSelect }: { onSelect: (lang: "zh" | "en" | "vi") => void }) {
+  const [hovering, setHovering] = useState<"zh" | "en" | "vi" | null>(null);
+  const [selected, setSelected] = useState<"zh" | "en" | "vi" | null>(null);
 
-  const handleSelect = (lang: "zh" | "en") => {
+  const handleSelect = (lang: "zh" | "en" | "vi") => {
     setSelected(lang);
     // Brief pause for the selection animation before transitioning
     setTimeout(() => onSelect(lang), 400);
@@ -64,10 +64,31 @@ export function LanguageSelector({ onSelect }: { onSelect: (lang: "zh" | "en") =
             Royal Road · Kindle Unlimited · Scribble Hub
           </div>
         </button>
+
+        <button
+          onClick={() => handleSelect("vi")}
+          onMouseEnter={() => setHovering("vi")}
+          onMouseLeave={() => setHovering(null)}
+          className={`group w-80 border rounded-lg p-10 text-left transition-all duration-300 ${
+            selected === "vi"
+              ? "border-primary bg-primary/10 scale-[1.02]"
+              : hovering === "vi"
+                ? "border-primary/50 bg-card"
+                : "border-border bg-card/50"
+          }`}
+        >
+          <div className="font-serif text-3xl mb-4 text-foreground">Sáng Tác Tiếng Việt</div>
+          <div className="text-base text-foreground/70 leading-relaxed mb-6">
+            Huyền huyễn · Tiên hiệp · Đô thị · Kinh dị · Tổng hợp
+          </div>
+          <div className="text-sm text-muted-foreground">
+            Giao diện tiếng Việt · nội dung viết đang hỗ trợ dần
+          </div>
+        </button>
       </div>
 
       <div className="text-sm text-muted-foreground">
-        可在设置中更改 · Can be changed in Settings
+        可在设置中更改 · Can be changed in Settings · Có thể đổi trong Cài đặt
       </div>
     </div>
   );

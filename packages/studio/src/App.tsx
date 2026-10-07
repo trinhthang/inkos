@@ -215,6 +215,15 @@ export function App() {
               >
                 EN
               </button>
+              <button
+                onClick={async () => {
+                  await putApi("/project", { language: "vi" });
+                  refetchProject();
+                }}
+                className={`px-2.5 py-1 text-[16px] font-medium rounded-md ${currentLang === "vi" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+              >
+                VI
+              </button>
             </div>
 
             <button

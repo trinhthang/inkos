@@ -106,6 +106,37 @@ export function buildInteractiveSetupCopy(locale: TuiLocale): InteractiveSetupCo
     };
   }
 
+  if (locale === "vi") {
+    return {
+      title: "Cấu hình mô hình",
+      subtitle: "Cấu hình nhà cung cấp mô hình để bắt đầu viết.",
+      steps: {
+        provider: "Nhà cung cấp",
+        baseUrl: "Địa chỉ API",
+        apiKey: "API Key",
+        model: "Mô hình",
+        scope: "Phạm vi lưu",
+      },
+      hints: {
+        provider: "openai / anthropic / kkaiapi / custom (proxy tương thích OpenAI)",
+        baseUrl: "Địa chỉ API của bạn",
+        apiKey: "Dán API Key của nhà cung cấp đã chọn.",
+        model: "VD: gpt-4o, claude-sonnet-4-20250514, deepseek-chat",
+        scope: "global = mọi dự án, project = chỉ thư mục này",
+      },
+      defaults: {
+        provider: "openai",
+        baseUrl: "(mặc định)",
+        scope: "[global]",
+      },
+      scopeChoices: {
+        global: "mọi dự án",
+        project: "thư mục này",
+      },
+      savedTo: "Đã lưu vào",
+    };
+  }
+
   return {
     title: "模型配置",
     subtitle: "配置模型服务后即可开始使用。",
@@ -146,6 +177,14 @@ export function buildAutoInitMessages(projectName: string, locale: TuiLocale): {
       initializing: `Initializing project in ${projectName}/ ...`,
       initialized: "Project initialized",
       envTemplateHeader: "# LLM Configuration — run inkos tui to configure interactively",
+    };
+  }
+
+  if (locale === "vi") {
+    return {
+      initializing: `Đang khởi tạo dự án: ${projectName}/ ...`,
+      initialized: "Đã khởi tạo dự án",
+      envTemplateHeader: "# Cấu hình LLM — chạy inkos tui để cấu hình tương tác",
     };
   }
 
