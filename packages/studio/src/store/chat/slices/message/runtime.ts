@@ -15,33 +15,33 @@ const NULL_BOOK_KEY = "__null__";
 
 // [zh, en] tuples resolved through tr() at call time so labels follow the
 // current app language instead of the language active at module load.
-const TOOL_LABELS: Record<string, readonly [string, string]> = {
-  read: ["读取文件", "Read file"],
-  edit: ["编辑文件", "Edit file"],
-  grep: ["搜索", "Search"],
-  ls: ["列目录", "List directory"],
-  context_compression: ["整理上下文", "Organize context"],
-  propose_action: ["确认动作", "Confirm action"],
-  short_fiction_run: ["短篇生产", "Short fiction run"],
-  generate_cover: ["生成封面", "Generate cover"],
-  script_create: ["剧本创作", "Create script"],
-  storyboard_create: ["分镜创作", "Create storyboard"],
-  interactive_film_create: ["互动影游", "Interactive film"],
-  play_edit: ["编辑互动世界", "Edit interactive world"],
-  play_start: ["启动互动世界", "Start interactive world"],
-  play_revise: ["重做互动回合", "Redo play turn"],
-  play_step: ["推进互动世界", "Advance interactive world"],
-  create_book: ["创建长篇", "Create long-form Work"],
-  create_work: ["创建作品", "Create Work"],
-  export_work: ["导出作品", "Export Work"],
-  review_and_export_work_artifact: ["审稿并导出", "Review and export"],
-  review_work_artifact: ["审稿", "Review artifact"],
-  revise_work_artifact: ["修订作品", "Revise artifact"],
-  revise_foundation: ["重建设定", "Revise foundation"],
-  write_chapters: ["写作章节", "Write chapters"],
-  review_chapter: ["审查章节", "Review chapter"],
-  revise_chapter: ["修订章节", "Revise chapter"],
-  export_book: ["导出作品", "Export Work"],
+const TOOL_LABELS: Record<string, readonly [string, string, string]> = {
+  read: ["读取文件", "Read file", "Đọc file"],
+  edit: ["编辑文件", "Edit file", "Sửa file"],
+  grep: ["搜索", "Search", "Tìm kiếm"],
+  ls: ["列目录", "List directory", "Liệt kê thư mục"],
+  context_compression: ["整理上下文", "Organize context", "Sắp xếp ngữ cảnh"],
+  propose_action: ["确认动作", "Confirm action", "Xác nhận hành động"],
+  short_fiction_run: ["短篇生产", "Short fiction run", "Sản xuất truyện ngắn"],
+  generate_cover: ["生成封面", "Generate cover", "Sinh bìa"],
+  script_create: ["剧本创作", "Create script", "Viết kịch bản"],
+  storyboard_create: ["分镜创作", "Create storyboard", "Dựng storyboard"],
+  interactive_film_create: ["互动影游", "Interactive film", "Phim tương tác"],
+  play_edit: ["编辑互动世界", "Edit interactive world", "Sửa thế giới tương tác"],
+  play_start: ["启动互动世界", "Start interactive world", "Mở thế giới tương tác"],
+  play_revise: ["重做互动回合", "Redo play turn", "Làm lại lượt chơi"],
+  play_step: ["推进互动世界", "Advance interactive world", "Đẩy tiếp thế giới tương tác"],
+  create_book: ["创建长篇", "Create long-form Work", "Tạo Work dài kỳ"],
+  create_work: ["创建作品", "Create Work", "Tạo tác phẩm"],
+  export_work: ["导出作品", "Export Work", "Xuất tác phẩm"],
+  review_and_export_work_artifact: ["审稿并导出", "Review and export", "Soát rồi xuất"],
+  review_work_artifact: ["审稿", "Review artifact", "Soát sản phẩm"],
+  revise_work_artifact: ["修订作品", "Revise artifact", "Chỉnh sửa sản phẩm"],
+  revise_foundation: ["重建设定", "Revise foundation", "Dựng lại nền tảng"],
+  write_chapters: ["写作章节", "Write chapters", "Viết chương"],
+  review_chapter: ["审查章节", "Review chapter", "Soát chương"],
+  revise_chapter: ["修订章节", "Revise chapter", "Chỉnh sửa chương"],
+  export_book: ["导出作品", "Export Work", "Xuất tác phẩm"],
 };
 
 export function bookKey(bookId: string | null | undefined): string {
@@ -56,7 +56,7 @@ export function extractErrorMessage(error: string | { code?: string; message?: s
 export function resolveToolLabel(tool: string, _agent?: string): string {
   tool = actionToolName(tool);
   const label = TOOL_LABELS[tool];
-  return label ? tr(label[0], label[1]) : tool;
+  return label ? tr(label[0], label[1], label[2]) : tool;
 }
 
 function actionToolName(tool: string): string {

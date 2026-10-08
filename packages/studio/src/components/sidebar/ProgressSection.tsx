@@ -10,24 +10,26 @@ import { SidebarCard } from "./SidebarCard";
 interface ProgressStep {
   readonly zh: string;
   readonly en: string;
+  // Display only: SSE log matching still happens on zh/en.
+  readonly vi: string;
 }
 
 const INIT_BOOK_STEPS: ReadonlyArray<ProgressStep> = [
-  { zh: "生成基础设定", en: "Generate foundation" },
-  { zh: "保存书籍配置", en: "Save book config" },
-  { zh: "写入基础设定文件", en: "Write foundation files" },
-  { zh: "初始化控制文档", en: "Initialize control docs" },
-  { zh: "创建初始快照", en: "Create initial snapshot" },
+  { zh: "生成基础设定", en: "Generate foundation", vi: "Sinh nền tảng" },
+  { zh: "保存书籍配置", en: "Save book config", vi: "Lưu cấu hình sách" },
+  { zh: "写入基础设定文件", en: "Write foundation files", vi: "Ghi file nền tảng" },
+  { zh: "初始化控制文档", en: "Initialize control docs", vi: "Khởi tạo tài liệu điều khiển" },
+  { zh: "创建初始快照", en: "Create initial snapshot", vi: "Tạo snapshot đầu tiên" },
 ];
 
 const WRITE_CHAPTER_STEPS: ReadonlyArray<ProgressStep> = [
-  { zh: "准备章节输入", en: "Prepare chapter input" },
-  { zh: "撰写章节草稿", en: "Draft the chapter" },
-  { zh: "落盘最终章节", en: "Save final chapter" },
-  { zh: "生成最终真相文件", en: "Generate final truth files" },
-  { zh: "校验真相文件变更", en: "Validate truth file changes" },
-  { zh: "同步记忆索引", en: "Sync memory index" },
-  { zh: "更新章节索引与快照", en: "Update chapter index and snapshot" },
+  { zh: "准备章节输入", en: "Prepare chapter input", vi: "Chuẩn bị đầu vào chương" },
+  { zh: "撰写章节草稿", en: "Draft the chapter", vi: "Viết bản nháp chương" },
+  { zh: "落盘最终章节", en: "Save final chapter", vi: "Lưu chương hoàn chỉnh" },
+  { zh: "生成最终真相文件", en: "Generate final truth files", vi: "Sinh file truth cuối" },
+  { zh: "校验真相文件变更", en: "Validate truth file changes", vi: "Kiểm thay đổi file truth" },
+  { zh: "同步记忆索引", en: "Sync memory index", vi: "Đồng bộ index bộ nhớ" },
+  { zh: "更新章节索引与快照", en: "Update chapter index and snapshot", vi: "Cập nhật index chương và snapshot" },
 ];
 
 type StepStatus = "pending" | "active" | "done";
@@ -84,7 +86,7 @@ export function ProgressSection({ sse }: ProgressSectionProps) {
   if (!steps) return null;
 
   return (
-    <SidebarCard title={tr("执行", "Progress")}>
+    <SidebarCard title={tr("执行", "Progress", "Tiến trình")}>
       <ul className="space-y-2">
         {steps.map((step, i) => {
           const status: StepStatus =
@@ -100,7 +102,7 @@ export function ProgressSection({ sse }: ProgressSectionProps) {
                 status === "active" && "text-foreground font-medium",
                 status === "pending" && "text-muted-foreground/50",
               )}>
-                {tr(step.zh, step.en)}
+                {tr(step.zh, step.en, step.vi)}
               </span>
             </li>
           );

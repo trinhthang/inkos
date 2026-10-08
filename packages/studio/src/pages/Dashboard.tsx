@@ -335,8 +335,8 @@ export function Dashboard({ nav, sse, theme, t }: { nav: Nav; sse: { messages: R
       {otherWorks.length > 0 && (
         <section className="space-y-4">
           <div className="border-b border-border/40 pb-4">
-            <h2 className="font-serif text-3xl">{tr("其他创作", "Other creative Works")}</h2>
-            <p className="mt-1 text-sm text-muted-foreground">{tr("短篇、剧本、分镜、互动世界、互动影游与翻译", "Short fiction, scripts, storyboards, interactive works, and translations")}</p>
+            <h2 className="font-serif text-3xl">{tr("其他创作", "Other creative Works", "Các sáng tác khác")}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{tr("短篇、剧本、分镜、互动世界、互动影游与翻译", "Short fiction, scripts, storyboards, interactive works, and translations", "Truyện ngắn, kịch bản, storyboard, thế giới tương tác, phim tương tác và bản dịch")}</p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             {otherWorks.map((work) => (

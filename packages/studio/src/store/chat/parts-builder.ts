@@ -34,31 +34,31 @@ export interface ContextCompressionStreamEvent {
 
 // [zh, en] tuples resolved through tr() at call time so labels follow the
 // current app language instead of the language active at module load.
-const TOOL_LABELS: Record<string, readonly [string, string]> = {
-  read: ["读取文件", "Read file"], edit: ["编辑文件", "Edit file"], grep: ["搜索", "Search"], ls: ["列目录", "List directory"],
-  context_compression: ["整理上下文", "Organize context"],
-  propose_action: ["确认动作", "Confirm action"],
-  short_fiction_run: ["短篇生产", "Short fiction run"],
-  generate_cover: ["生成封面", "Generate cover"],
-  play_edit: ["编辑互动世界", "Edit interactive world"],
-  play_start: ["启动互动世界", "Start interactive world"],
-  play_revise: ["重做互动回合", "Redo play turn"],
-  play_step: ["推进互动世界", "Advance interactive world"],
-  create_narrative_forecast: ["剧情多线推演", "Narrative forecast"],
-  get_narrative_forecast: ["核验剧情推演", "Recheck forecast"],
-  select_narrative_branch: ["采用候选分支", "Select candidate branch"],
-  create_book: ["创建长篇", "Create long-form Work"],
-  revise_foundation: ["重建设定", "Revise foundation"],
-  write_chapters: ["写作章节", "Write chapters"],
-  review_chapter: ["审查章节", "Review chapter"],
-  revise_chapter: ["修订章节", "Revise chapter"],
-  export_book: ["导出作品", "Export Work"],
+const TOOL_LABELS: Record<string, readonly [string, string, string]> = {
+  read: ["读取文件", "Read file", "Đọc file"], edit: ["编辑文件", "Edit file", "Sửa file"], grep: ["搜索", "Search", "Tìm kiếm"], ls: ["列目录", "List directory", "Liệt kê thư mục"],
+  context_compression: ["整理上下文", "Organize context", "Sắp xếp ngữ cảnh"],
+  propose_action: ["确认动作", "Confirm action", "Xác nhận hành động"],
+  short_fiction_run: ["短篇生产", "Short fiction run", "Sản xuất truyện ngắn"],
+  generate_cover: ["生成封面", "Generate cover", "Sinh bìa"],
+  play_edit: ["编辑互动世界", "Edit interactive world", "Sửa thế giới tương tác"],
+  play_start: ["启动互动世界", "Start interactive world", "Mở thế giới tương tác"],
+  play_revise: ["重做互动回合", "Redo play turn", "Làm lại lượt chơi"],
+  play_step: ["推进互动世界", "Advance interactive world", "Đẩy tiếp thế giới tương tác"],
+  create_narrative_forecast: ["剧情多线推演", "Narrative forecast", "Suy diễn đa tuyến"],
+  get_narrative_forecast: ["核验剧情推演", "Recheck forecast", "Kiểm lại suy diễn"],
+  select_narrative_branch: ["采用候选分支", "Select candidate branch", "Chọn nhánh ứng viên"],
+  create_book: ["创建长篇", "Create long-form Work", "Tạo Work dài kỳ"],
+  revise_foundation: ["重建设定", "Revise foundation", "Dựng lại nền tảng"],
+  write_chapters: ["写作章节", "Write chapters", "Viết chương"],
+  review_chapter: ["审查章节", "Review chapter", "Soát chương"],
+  revise_chapter: ["修订章节", "Revise chapter", "Chỉnh sửa chương"],
+  export_book: ["导出作品", "Export Work", "Xuất tác phẩm"],
 };
 
 function resolveToolLabel(tool: string, _agent?: string): string {
   const action = actionToolName(tool);
   const label = TOOL_LABELS[action];
-  return label ? tr(label[0], label[1]) : action;
+  return label ? tr(label[0], label[1], label[2]) : action;
 }
 
 function actionToolName(tool: string): string {
@@ -67,23 +67,23 @@ function actionToolName(tool: string): string {
 
 function compressionLabel(category: ContextCompressionCategory): string {
   return category === "session_context"
-    ? tr("整理会话记忆", "Organize session memory")
-    : tr("压缩故事上下文", "Compress story context");
+    ? tr("整理会话记忆", "Organize session memory", "Sắp xếp bộ nhớ phiên")
+    : tr("压缩故事上下文", "Compress story context", "Nén ngữ cảnh truyện");
 }
 
 function compressionSourceSummary(sources: readonly string[] | undefined): string {
   if (!sources || sources.length === 0) return "";
   const preview = sources.slice(0, 3).join(", ");
   const suffix = sources.length > 3 ? ` +${sources.length - 3}` : "";
-  return `${tr("来源", "sources")} ${sources.length}: ${preview}${suffix}`;
+  return `${tr("来源", "sources", "nguồn")} ${sources.length}: ${preview}${suffix}`;
 }
 
 function compressionProgress(event: ContextCompressionStreamEvent): PipelineStage["progress"] | undefined {
   if (event.phase !== "start") return undefined;
   const parts = [
-    event.protectedTokens !== undefined ? `${tr("保护", "protected")} ${event.protectedTokens}` : "",
-    event.compressibleTokens !== undefined ? `${tr("可压缩", "compressible")} ${event.compressibleTokens}` : "",
-    event.budgetTokens !== undefined ? `${tr("预算", "budget")} ${event.budgetTokens}` : "",
+    event.protectedTokens !== undefined ? `${tr("保护", "protected", "được bảo vệ")} ${event.protectedTokens}` : "",
+    event.compressibleTokens !== undefined ? `${tr("可压缩", "compressible", "có thể nén")} ${event.compressibleTokens}` : "",
+    event.budgetTokens !== undefined ? `${tr("预算", "budget", "ngân sách")} ${event.budgetTokens}` : "",
     compressionSourceSummary(event.sources),
   ].filter(Boolean);
   return {
@@ -117,7 +117,7 @@ function applyContextCompressionEvent(parts: MessagePart[], event: ContextCompre
     runningTool.stages = upsertCompressionStage(runningTool.stages, event);
     if (event.phase === "error") {
       runningTool.status = "error";
-      runningTool.error = event.message ?? `${compressionLabel(event.category)}${tr("失败", " failed")}`;
+      runningTool.error = event.message ?? `${compressionLabel(event.category)}${tr("失败", " failed", " thất bại")}`;
     }
     return;
   }
@@ -139,7 +139,7 @@ function applyContextCompressionEvent(parts: MessagePart[], event: ContextCompre
   execution.label = compressionLabel(event.category);
   execution.stages = upsertCompressionStage(execution.stages, event);
   if (event.phase !== "start") execution.completedAt = Date.now();
-  if (event.phase === "error") execution.error = event.message ?? `${compressionLabel(event.category)}${tr("失败", " failed")}`;
+  if (event.phase === "error") execution.error = event.message ?? `${compressionLabel(event.category)}${tr("失败", " failed", " thất bại")}`;
   if (!existing) parts.push({ type: "tool", execution });
 }
 

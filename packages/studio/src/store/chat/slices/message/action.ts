@@ -71,7 +71,7 @@ function formatAttachmentSize(size: number): string {
 
 function formatUserMessageForDisplay(text: string, attachments: ReadonlyArray<ChatAttachmentPayload>): string {
   if (attachments.length === 0) return text;
-  const heading = tr("附件：", "Attachments:");
+  const heading = tr("附件：", "Attachments:", "Tệp kèm:");
   const lines = text ? [text, "", heading] : [heading];
   for (const attachment of attachments) {
     lines.push(`- ${attachment.filename} (${attachment.mediaType || "application/octet-stream"}, ${formatAttachmentSize(attachment.size)})`);
@@ -405,7 +405,7 @@ export const createMessageSlice: StateCreator<ChatStore, [], [], MessageActions>
     }
     const session = get().sessions[sessionId];
     const stoppedAt = Date.now();
-    const stoppedMessage = tr("已由用户停止", "Stopped by user");
+    const stoppedMessage = tr("已由用户停止", "Stopped by user", "Người dùng đã dừng");
     const messages = markRunningToolsFailed(
       session?.messages ?? [],
       stoppedMessage,
@@ -451,11 +451,11 @@ export const createMessageSlice: StateCreator<ChatStore, [], [], MessageActions>
         restoredMessages = mergeToolExecution(restoredMessages, execution);
       }
       if (!isRunning && data.chatRequest !== undefined) restoredMessages = markRunningToolsFailed(
-        restoredMessages, tr("运行已中断，请从已保存结果继续。", "Execution stopped. Continue from the saved results."), Date.now(),
+        restoredMessages, tr("运行已中断，请从已保存结果继续。", "Execution stopped. Continue from the saved results.", "Lần chạy đã bị ngắt; tiếp tục từ kết quả đã lưu."), Date.now(),
       );
       const failedRequest = data.chatRequest?.status === "failed" ? data.chatRequest : undefined;
       const failureMessage = failedRequest ? failedRequest.error?.message
-        ?? tr("上次请求未完成，请重试或从已保存结果继续。", "The previous request failed. Retry or continue from the saved results.") : undefined;
+        ?? tr("上次请求未完成，请重试或从已保存结果继续。", "The previous request failed. Retry or continue from the saved results.", "Request trước chưa xong; thử lại hoặc tiếp tục từ kết quả đã lưu.") : undefined;
       const failureTimestamp = failedRequest?.completedAt ?? failedRequest?.startedAt;
       if (failureMessage && failureTimestamp !== undefined) restoredMessages = [...restoredMessages, {
         role: "assistant", kind: "error", content: failureMessage, timestamp: failureTimestamp,
@@ -554,10 +554,10 @@ export const createMessageSlice: StateCreator<ChatStore, [], [], MessageActions>
     const boundWorkId = session.workId ?? session.bookId;
     const requestedWorkIds = [options?.activeBookId, options?.workId].filter(Boolean);
     if (boundWorkId && requestedWorkIds.some(id => id !== boundWorkId)) {
-      get().addErrorMessage(sessionId, tr("作品切换尚未完成，请等待当前作品会话加载后重试。", "The work session is still switching. Wait for the selected work to load and retry."));
+      get().addErrorMessage(sessionId, tr("作品切换尚未完成，请等待当前作品会话加载后重试。", "The work session is still switching. Wait for the selected work to load and retry.", "Phiên tác phẩm đang chuyển; chờ tác phẩm đã chọn tải xong rồi thử lại."));
       return;
     }
-    const userInstruction = trimmed || tr("请阅读我上传的文件。", "Please read the files I uploaded.");
+    const userInstruction = trimmed || tr("请阅读我上传的文件。", "Please read the files I uploaded.", "Hãy đọc các file tôi vừa tải lên.");
     const activeBookId = options?.activeBookId ?? session.bookId ?? undefined;
     const sessionKind: ChatSessionKind = options?.sessionKind
       ?? session.sessionKind
@@ -584,7 +584,7 @@ export const createMessageSlice: StateCreator<ChatStore, [], [], MessageActions>
 
     if (!get().selectedModel) {
       get().addUserMessage(sessionId, formatUserMessageForDisplay(userInstruction, attachments));
-      get().addErrorMessage(sessionId, tr("请先选择一个模型", "Select a model first"));
+      get().addErrorMessage(sessionId, tr("请先选择一个模型", "Select a model first", "Chọn một model trước"));
       rememberFailedSend();
       return;
     }
@@ -743,7 +743,7 @@ export const createMessageSlice: StateCreator<ChatStore, [], [], MessageActions>
         } else {
           const emptyMessage = tr(
             "模型未返回文本内容。请检查协议类型（chat/responses）、流式开关或上游服务兼容性。",
-            "The model returned no text. Check the protocol type (chat/responses), the streaming toggle, or upstream service compatibility.",
+            "The model returned no text. Check the protocol type (chat/responses), the streaming toggle, or upstream service compatibility.", "Model không trả về nội dung chữ. Kiểm tra loại giao thức (chat/responses), công tắc stream, hoặc mức tương thích của dịch vụ phía trên.",
           );
           get().addErrorMessage(sessionId, emptyMessage);
           // 空响应同样算这轮失败；用户主动停止的轮 isChatStreaming 已是 false，不记录。
