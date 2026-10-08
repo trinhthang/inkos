@@ -42,4 +42,13 @@ describe("tui slash autocomplete", () => {
     expect(en).toHaveLength(zh.length);
     expect(en.map((c) => c.match(/^\/\S+/)?.[0])).toEqual(zh.map((c) => c.match(/^\/\S+/)?.[0]));
   });
+
+  it("builds a Vietnamese list with no Han and the same stems", () => {
+    const zh = buildSlashCommands("zh-CN");
+    const vi = buildSlashCommands("vi");
+
+    expect(vi[0]).toBe("/new mô tả ý tưởng của bạn");
+    expect(/[\u3400-\u4dbf\u4e00-\u9fff]/.test(vi.join(" "))).toBe(false);
+    expect(vi.map((c) => c.match(/^\/\S+/)?.[0])).toEqual(zh.map((c) => c.match(/^\/\S+/)?.[0]));
+  });
 });

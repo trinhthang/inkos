@@ -15,7 +15,9 @@ import { loadConfig, buildPipelineConfig, findProjectRoot, resolveBookId, log, l
 import {
   formatFanficCanonMissingError,
   formatFanficSourceDirEmptyError,
+  normalizeCliLanguageTag,
   resolveCliLanguage,
+  toContentLanguage,
 } from "../localization.js";
 
 export const fanficCommand = new Command("fanfic")
@@ -31,7 +33,7 @@ fanficCommand
   .option("--platform <platform>", "Target platform", "other")
   .option("--target-chapters <n>", "Target chapter count", "100")
   .option("--chapter-words <n>", "Words per chapter", "3000")
-  .option("--lang <language>", "Writing language: zh or en. Defaults from the project.")
+  .option("--lang <language>", "Writing language: zh or en, defaults from the project. vi is accepted but still writes in English until Vietnamese prose is supported.")
   .option("--json", "Output JSON")
   .action(async (opts) => {
     try {
@@ -58,7 +60,9 @@ fanficCommand
         status: "outlining",
         targetChapters: parseInt(opts.targetChapters, 10),
         chapterWordCount: parseInt(opts.chapterWords, 10),
-        language: resolveCliLanguage(opts.lang ?? config.language),
+        language: toContentLanguage(
+          normalizeCliLanguageTag(opts.lang) ?? resolveCliLanguage(config.language),
+        ),
         createdAt: now,
         updatedAt: now,
         fanficMode: mode,

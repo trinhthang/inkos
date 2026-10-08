@@ -1,10 +1,12 @@
-import type { CliLanguage } from "../localization.js";
+import type { TuiLocale } from "./i18n.js";
 
-const SLASH_COMMAND_VARIANTS: ReadonlyArray<{ zh: string; en: string }> = [
-  { zh: "/new 输入你的想法", en: "/new describe your idea" },
-  { zh: "/short 输入短篇方向", en: "/short describe the short" },
-  { zh: "/play [open|guided] 输入互动世界开局", en: "/play [open|guided] describe the opening" },
-  { zh: "/cover 输入封面方向", en: "/cover describe the cover" },
+// vi only where the command carries prose; the bare commands read the same in
+// every language, so an absent vi correctly falls back to the en spelling.
+const SLASH_COMMAND_VARIANTS: ReadonlyArray<{ zh: string; en: string; vi?: string }> = [
+  { zh: "/new 输入你的想法", en: "/new describe your idea", vi: "/new mô tả ý tưởng của bạn" },
+  { zh: "/short 输入短篇方向", en: "/short describe the short", vi: "/short mô tả hướng truyện ngắn" },
+  { zh: "/play [open|guided] 输入互动世界开局", en: "/play [open|guided] describe the opening", vi: "/play [open|guided] mô tả màn mở đầu" },
+  { zh: "/cover 输入封面方向", en: "/cover describe the cover", vi: "/cover mô tả hướng bìa" },
   { zh: "/write", en: "/write" },
   { zh: "/confirm", en: "/confirm" },
   { zh: "/cancel", en: "/cancel" },
@@ -17,11 +19,12 @@ const SLASH_COMMAND_VARIANTS: ReadonlyArray<{ zh: string; en: string }> = [
   { zh: "/exit", en: "/exit" },
 ];
 
-export function buildSlashCommands(language: CliLanguage = "zh"): readonly string[] {
-  return SLASH_COMMAND_VARIANTS.map((variant) => (language === "en" ? variant.en : variant.zh));
+export function buildSlashCommands(locale: TuiLocale = "zh-CN"): readonly string[] {
+  const key = locale === "en" ? "en" : locale === "vi" ? "vi" : "zh";
+  return SLASH_COMMAND_VARIANTS.map((variant) => variant[key] ?? variant.en);
 }
 
-export const SLASH_COMMANDS = buildSlashCommands("zh");
+export const SLASH_COMMANDS = buildSlashCommands("zh-CN");
 
 export type SlashNavigationDirection = "up" | "down";
 

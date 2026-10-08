@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   appendInteractionMessage,
   type InteractionSession,
@@ -18,9 +18,9 @@ import { loadProjectSession, persistProjectSession, resolveSessionActiveBook } f
 import { classifyLocalTuiCommand, parseDepthCommand, parseModelCommand } from "./local-commands.js";
 import {
   applySlashSuggestion,
+  buildSlashCommands,
   getNextSlashSelection,
   getSlashSuggestions,
-  SLASH_COMMANDS,
 } from "./slash-autocomplete.js";
 import {
   WARM_ACCENT, WARM_BORDER, WARM_MUTED, WARM_REPLY,
@@ -182,7 +182,8 @@ export function InkTuiApp(props: InkTuiAppProps): React.JSX.Element {
   );
   const assistantDraftTimestampRef = useRef<number | null>(null);
   const submitLockRef = useRef(false);
-  const slashSuggestions = getSlashSuggestions(inputValue, SLASH_COMMANDS);
+  const slashCommands = useMemo(() => buildSlashCommands(props.locale), [props.locale]);
+  const slashSuggestions = getSlashSuggestions(inputValue, slashCommands);
   const inputHistory = buildInputHistory(session.messages);
   const activity = describeActivityState(copy);
   const chatDepthProfile = resolveChatDepthProfile(chatDepth);

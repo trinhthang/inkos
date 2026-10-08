@@ -5,6 +5,7 @@ import { dirname, join, resolve } from "node:path";
 import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { ensureProjectDirectoryInitialized } from "../project-bootstrap.js";
+import { resolveCliLanguage } from "../localization.js";
 
 export interface StudioLaunchSpec {
   readonly studioEntry: string;
@@ -50,7 +51,7 @@ async function prepareStudioRoot(
   options: { readonly explicitProject?: boolean; readonly recentProjectPath?: string } = {},
 ): Promise<{ readonly root: string; readonly initialized: boolean; readonly source: "requested" | "recent" | "new" }> {
   const resolved = await resolveStudioProjectRoot(root, options);
-  const initialized = await ensureProjectDirectoryInitialized(resolved.root, { language: "zh" });
+  const initialized = await ensureProjectDirectoryInitialized(resolved.root, { language: resolveCliLanguage() });
   await saveRecentStudioProject(options.recentProjectPath ?? DEFAULT_RECENT_STUDIO_PROJECT_PATH, resolved.root);
   return { ...resolved, initialized };
 }

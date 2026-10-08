@@ -12,6 +12,7 @@ import {
   formatImportCanonComplete,
   formatImportCanonStart,
   formatImportChaptersComplete,
+  formatImportChaptersReading,
   formatImportChaptersResume,
   resolveCliLanguage,
 } from "../localization.js";
@@ -95,9 +96,7 @@ importCommand
 
       const fromPath = resolve(opts.from);
       if (!opts.json) {
-        log(language === "en"
-          ? `Reading chapters from "${fromPath}" for import into "${bookId}".`
-          : `正在读取「${fromPath}」，准备导入到「${bookId}」。`);
+        log(formatImportChaptersReading(language, fromPath, bookId));
         if (opts.resumeFrom) {
           log(formatImportChaptersResume(language, opts.resumeFrom));
         }

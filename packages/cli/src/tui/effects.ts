@@ -276,36 +276,55 @@ export function formatResultCard(content: string, intent?: string): string {
   return lines.join("\n");
 }
 
+// Record<TuiLocale, ...> on purpose: a new locale fails to compile until its
+// labels exist, instead of silently falling through to Chinese.
+const INTENT_BADGES: Record<TuiLocale, Record<string, string>> = {
+  en: {
+    write_next: " WRITE ",
+    revise_chapter: " REVISE ",
+    rewrite_chapter: " REWRITE ",
+    update_focus: " FOCUS ",
+    explain_status: " STATUS ",
+    explain_failure: " DEBUG ",
+    pause_book: " PAUSE ",
+    list_books: " BOOKS ",
+    select_book: " SELECT ",
+    rename_entity: " RENAME ",
+    patch_chapter_text: " PATCH ",
+    edit_truth: " TRUTH ",
+  },
+  "zh-CN": {
+    write_next: " 写作 ",
+    revise_chapter: " 修订 ",
+    rewrite_chapter: " 重写 ",
+    update_focus: " 焦点 ",
+    explain_status: " 状态 ",
+    explain_failure: " 调试 ",
+    pause_book: " 暂停 ",
+    list_books: " 作品 ",
+    select_book: " 选择 ",
+    rename_entity: " 改名 ",
+    patch_chapter_text: " 修补 ",
+    edit_truth: " 真相 ",
+  },
+  vi: {
+    write_next: " VIẾT ",
+    revise_chapter: " SỬA ",
+    rewrite_chapter: " VIẾT LẠI ",
+    update_focus: " TIÊU ĐIỂM ",
+    explain_status: " TRẠNG THÁI ",
+    explain_failure: " GỠ LỖI ",
+    pause_book: " TẠM DỪNG ",
+    list_books: " TÁC PHẨM ",
+    select_book: " CHỌN ",
+    rename_entity: " ĐỔI TÊN ",
+    patch_chapter_text: " VÁ ",
+    edit_truth: " TRUTH ",
+  },
+};
+
 export function intentToBadge(intent: string, locale: TuiLocale = resolveTuiLocale()): string {
-  const labels = locale === "en"
-    ? {
-        write_next: " WRITE ",
-        revise_chapter: " REVISE ",
-        rewrite_chapter: " REWRITE ",
-        update_focus: " FOCUS ",
-        explain_status: " STATUS ",
-        explain_failure: " DEBUG ",
-        pause_book: " PAUSE ",
-        list_books: " BOOKS ",
-        select_book: " SELECT ",
-        rename_entity: " RENAME ",
-        patch_chapter_text: " PATCH ",
-        edit_truth: " TRUTH ",
-      }
-    : {
-        write_next: " 写作 ",
-        revise_chapter: " 修订 ",
-        rewrite_chapter: " 重写 ",
-        update_focus: " 焦点 ",
-        explain_status: " 状态 ",
-        explain_failure: " 调试 ",
-        pause_book: " 暂停 ",
-        list_books: " 作品 ",
-        select_book: " 选择 ",
-        rename_entity: " 改名 ",
-        patch_chapter_text: " 修补 ",
-        edit_truth: " 真相 ",
-      };
+  const labels = INTENT_BADGES[locale];
   const backgrounds: Record<string, string> = {
     write_next: bgMagenta,
     revise_chapter: bgBlue,
@@ -379,41 +398,38 @@ function formatElapsed(ms: number): string {
   return `${m}m${s % 60}s`;
 }
 
-export function buildStyledHelpSections(locale: TuiLocale = resolveTuiLocale()): StyledHelpSection[] {
-  if (locale === "en") {
-    return [
-      {
-        title: "Writing",
-        commands: [
-          ["/write", "Write the next chapter (full pipeline)"],
-          ["/rewrite <n>", "Rewrite chapter N from scratch"],
-        ],
-      },
-      {
-        title: "Navigation",
-        commands: [
-          ["/books", "Ask the agent to list books"],
-          ["/status", "Show current status"],
-        ],
-      },
-      {
-        title: "Control",
-        commands: [
-          ["/focus <text>", "Update current focus"],
-        ],
-      },
-      {
-        title: "Session",
-        commands: [
-          ["/clear", "Clear screen"],
-          ["/help", "Show this help"],
-          ["/quit", "Exit InkOS TUI"],
-        ],
-      },
-    ];
-  }
-
-  return [
+const HELP_SECTIONS: Record<TuiLocale, StyledHelpSection[]> = {
+  en: [
+    {
+      title: "Writing",
+      commands: [
+        ["/write", "Write the next chapter (full pipeline)"],
+        ["/rewrite <n>", "Rewrite chapter N from scratch"],
+      ],
+    },
+    {
+      title: "Navigation",
+      commands: [
+        ["/books", "Ask the agent to list books"],
+        ["/status", "Show current status"],
+      ],
+    },
+    {
+      title: "Control",
+      commands: [
+        ["/focus <text>", "Update current focus"],
+      ],
+    },
+    {
+      title: "Session",
+      commands: [
+        ["/clear", "Clear screen"],
+        ["/help", "Show this help"],
+        ["/quit", "Exit InkOS TUI"],
+      ],
+    },
+  ],
+  "zh-CN": [
     {
       title: "写作",
       commands: [
@@ -442,29 +458,66 @@ export function buildStyledHelpSections(locale: TuiLocale = resolveTuiLocale()):
         ["/quit", "退出 InkOS TUI"],
       ],
     },
-  ];
+  ],
+  vi: [
+    {
+      title: "Viết",
+      commands: [
+        ["/write", "Viết chương kế tiếp (chạy trọn pipeline)"],
+        ["/rewrite <n>", "Viết lại chương N từ đầu"],
+      ],
+    },
+    {
+      title: "Điều hướng",
+      commands: [
+        ["/books", "Yêu cầu agent liệt kê tác phẩm"],
+        ["/status", "Xem trạng thái hiện tại"],
+      ],
+    },
+    {
+      title: "Điều khiển",
+      commands: [
+        ["/focus <text>", "Cập nhật tiêu điểm hiện tại"],
+      ],
+    },
+    {
+      title: "Phiên",
+      commands: [
+        ["/clear", "Xóa màn hình"],
+        ["/help", "Hiện trợ giúp này"],
+        ["/quit", "Thoát InkOS TUI"],
+      ],
+    },
+  ],
+};
+
+export function buildStyledHelpSections(locale: TuiLocale = resolveTuiLocale()): StyledHelpSection[] {
+  return HELP_SECTIONS[locale];
 }
 
-function buildHelpFooter(locale: TuiLocale): { readonly title: string; readonly examples: readonly string[] } {
-  if (locale === "en") {
-    return {
-      title: "Use slash commands for actions:",
-      examples: ['"/write" "/rewrite 3" "/pause" "/rename Lin Jin => Zhang San"'],
-    };
-  }
-
-  return {
+const HELP_FOOTERS: Record<TuiLocale, { readonly title: string; readonly examples: readonly string[] }> = {
+  en: {
+    title: "Use slash commands for actions:",
+    examples: ['"/write" "/rewrite 3" "/pause" "/rename Lin Jin => Zhang San"'],
+  },
+  "zh-CN": {
     title: "执行动作请使用 slash 命令：",
     examples: ['"/write" "/rewrite 3" "/pause" "/rename 林烬 => 张三"'],
-  };
+  },
+  vi: {
+    title: "Dùng slash command để thực hiện hành động:",
+    examples: ['"/write" "/rewrite 3" "/pause" "/rename Lin Jin => Zhang San"'],
+  },
+};
+
+function buildHelpFooter(locale: TuiLocale): { readonly title: string; readonly examples: readonly string[] } {
+  return HELP_FOOTERS[locale];
 }
 
-function localizeThemeLabel(label: string, locale: TuiLocale): string {
-  if (locale === "en") {
-    return label;
-  }
-
-  const labels: Record<string, string> = {
+// English spinner labels are already the canonical keys, so en needs no table —
+// only the locales that actually translate them get one.
+const THEME_LABELS: Record<Exclude<TuiLocale, "en">, Record<string, string>> = {
+  "zh-CN": {
     thinking: "思考中",
     writing: "写作中",
     auditing: "审计中",
@@ -472,6 +525,21 @@ function localizeThemeLabel(label: string, locale: TuiLocale): string {
     planning: "规划中",
     composing: "生成中",
     loading: "加载中",
-  };
-  return labels[label] ?? label;
+  },
+  vi: {
+    thinking: "Đang nghĩ",
+    writing: "Đang viết",
+    auditing: "Đang soát",
+    revising: "Đang sửa",
+    planning: "Đang lập ý",
+    composing: "Đang dựng",
+    loading: "Đang tải",
+  },
+};
+
+function localizeThemeLabel(label: string, locale: TuiLocale): string {
+  if (locale === "en") {
+    return label;
+  }
+  return THEME_LABELS[locale][label] ?? label;
 }

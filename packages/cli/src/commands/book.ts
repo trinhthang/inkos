@@ -21,7 +21,10 @@ import {
   formatBookCreateLocation,
   formatBookCreateNextStep,
   formatBookRestoreDone,
+  pickCliText,
+  normalizeCliLanguageTag,
   resolveCliLanguage,
+  toContentLanguage,
 } from "../localization.js";
 import { createBookBackup, listBookBackups, restoreBookBackup } from "../book-backup.js";
 import { loadConfig, buildPipelineConfig, findProjectRoot, resolveBookId, log, logError, resolveCliProfileSkills } from "../utils.js";
@@ -38,7 +41,7 @@ bookCommand
   .option("--target-chapters <n>", "Target chapter count", "200")
   .option("--chapter-words <n>", "Words per chapter", "3000")
   .option("--brief <path>", "Path to creative brief file (.md/.txt) — Architect builds from your ideas instead of generating from scratch")
-  .option("--lang <language>", "Writing language: zh (Chinese) or en (English). Defaults from genre.")
+  .option("--lang <language>", "Writing language: zh or en, defaults from the project. vi is accepted but still writes in English until Vietnamese prose is supported.")
   .option("--json", "Output JSON")
   .action(async (opts) => {
     try {
@@ -69,7 +72,11 @@ bookCommand
         status: "outlining",
         targetChapters: parseInt(opts.targetChapters, 10),
         chapterWordCount: parseInt(opts.chapterWords, 10),
-        language: resolveCliLanguage(opts.lang ?? config.language),
+        language: toContentLanguage(
+          // --lang is explicit intent about the writing language, so it beats
+          // INKOS_LOCALE; without it the project's language decides.
+          normalizeCliLanguageTag(opts.lang) ?? resolveCliLanguage(config.language),
+        ),
         createdAt: now,
         updatedAt: now,
       };
@@ -145,7 +152,7 @@ bookCommand
   .option("--chapter-words <n>", "Words per chapter")
   .option("--target-chapters <n>", "Target chapter count")
   .option("--status <status>", "Book status (outlining/active/paused/completed)")
-  .option("--lang <language>", "Writing language: zh or en")
+  .option("--lang <language>", "Writing language: zh or en. vi is accepted but still writes in English until Vietnamese prose is supported.")
   .option("--json", "Output JSON")
   .action(async (bookIdArg: string | undefined, opts) => {
     try {
@@ -158,7 +165,11 @@ bookCommand
       if (opts.chapterWords) updates.chapterWordCount = parseInt(opts.chapterWords, 10);
       if (opts.targetChapters) updates.targetChapters = parseInt(opts.targetChapters, 10);
       if (opts.status) updates.status = opts.status;
-      if (opts.lang) updates.language = opts.lang;
+      if (opts.lang) {
+        const requested = normalizeCliLanguageTag(opts.lang);
+        if (!requested) throw new Error(`--lang must be zh, en, or vi (got "${opts.lang}")`);
+        updates.language = toContentLanguage(requested);
+      }
 
       if (Object.keys(updates).length === 0) {
         if (opts.json) {
@@ -211,7 +222,11 @@ bookCommand
         if (opts.json) {
           log(JSON.stringify({ books: [] }));
         } else {
-          log("No books found. Create one with: inkos book create --title '...'");
+          log(pickCliText(resolveCliLanguage(), {
+            zh: "还没有作品。用 inkos book create --title '...' 创建一本。",
+            en: "No books found. Create one with: inkos book create --title '...'",
+            vi: "Chưa có tác phẩm nào. Tạo một bản bằng: inkos book create --title '...'",
+          }));
         }
         return;
       }

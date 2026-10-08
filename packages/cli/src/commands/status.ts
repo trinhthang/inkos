@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { StateManager, formatLengthCount, resolveLengthCountingMode } from "@actalk/inkos-core";
 import { findProjectRoot, log, logError } from "../utils.js";
+import { pickCliText, resolveCliLanguage } from "../localization.js";
 
 export const statusCommand = new Command("status")
   .description("Show project status")
@@ -8,6 +9,10 @@ export const statusCommand = new Command("status")
   .option("--chapters", "Show per-chapter status and observations")
   .option("--json", "Output JSON")
   .action(async (bookIdArg: string | undefined, opts) => {
+    // Status can run with no book selected, so the chrome follows the environment.
+    // Hoisted above the try because the catch block reports in the same language.
+    const language = resolveCliLanguage();
+
     try {
       const root = findProjectRoot();
       const state = new StateManager(root);
@@ -24,8 +29,8 @@ export const statusCommand = new Command("status")
       const booksData = [];
 
       if (!opts.json) {
-        log(`InkOS Project: ${root}`);
-        log(`Books: ${allBookIds.length}`);
+        log(`${pickCliText(language, { zh: "InkOS 项目", en: "InkOS Project", vi: "Dự án InkOS" })}: ${root}`);
+        log(`${pickCliText(language, { zh: "作品数", en: "Books", vi: "Số tác phẩm" })}: ${allBookIds.length}`);
         log("");
       }
 
@@ -66,12 +71,26 @@ export const statusCommand = new Command("status")
 
         if (!opts.json) {
           log(`  ${book.title} (${id})`);
-          log(`    Status: ${book.status}`);
-          log(`    Platform: ${book.platform} | Genre: ${book.genre}`);
-          log(`    Chapters: ${index.length} / ${book.targetChapters}`);
-          if (persistedChapterCount !== index.length) log(`    Chapter files: ${persistedChapterCount}; the file count differs from the chapter index.`);
-          log(`    Words: ${totalWords.toLocaleString()} (avg ${avgWords}/ch)`);
-          log(`    Review observations: ${observationCount} across ${chaptersWithObservations} chapter(s)`);
+          log(`    ${pickCliText(language, { zh: "状态", en: "Status", vi: "Trạng thái" })}: ${book.status}`);
+          log(`    ${pickCliText(language, { zh: "平台", en: "Platform", vi: "Nền tảng" })}: ${book.platform} | ${pickCliText(language, { zh: "题材", en: "Genre", vi: "Thể loại" })}: ${book.genre}`);
+          log(`    ${pickCliText(language, { zh: "章节", en: "Chapters", vi: "Chương" })}: ${index.length} / ${book.targetChapters}`);
+          if (persistedChapterCount !== index.length) {
+            log(`    ${pickCliText(language, {
+              zh: `章节文件：${persistedChapterCount}；文件数与章节索引不一致。`,
+              en: `Chapter files: ${persistedChapterCount}; the file count differs from the chapter index.`,
+              vi: `File chương: ${persistedChapterCount}; số file không khớp với index chương.`,
+            })}`);
+          }
+          log(`    ${pickCliText(language, {
+            zh: `字数：${totalWords.toLocaleString()}（平均 ${avgWords}/章）`,
+            en: `Words: ${totalWords.toLocaleString()} (avg ${avgWords}/ch)`,
+            vi: `Độ dài: ${totalWords.toLocaleString()} (trung bình ${avgWords}/chương)`,
+          })}`);
+          log(`    ${pickCliText(language, {
+            zh: `审查观察：${observationCount} 条，涉及 ${chaptersWithObservations} 章`,
+            en: `Review observations: ${observationCount} across ${chaptersWithObservations} chapter(s)`,
+            vi: `Ghi nhận soát duyệt: ${observationCount}, trên ${chaptersWithObservations} chương`,
+          })}`);
 
           if (opts.chapters && index.length > 0) {
             log("");
@@ -94,7 +113,11 @@ export const statusCommand = new Command("status")
       if (opts.json) {
         log(JSON.stringify({ error: String(e) }));
       } else {
-        logError(`Failed to get status: ${e}`);
+        logError(pickCliText(language, {
+          zh: `读取状态失败：${e}`,
+          en: `Failed to get status: ${e}`,
+          vi: `Không đọc được trạng thái: ${e}`,
+        }));
       }
       process.exit(1);
     }

@@ -306,7 +306,9 @@ async function autoInit(cwd: string): Promise<void> {
   const config = {
     name: projectName,
     version: "0.1.0",
-    language: "zh",
+    // Persist the locale that was just resolved, otherwise INKOS_LOCALE=vi creates a
+    // zh project and the choice is lost on the next run.
+    language: locale === "en" ? "en" : locale === "vi" ? "vi" : "zh",
     llm: {
       provider: process.env.INKOS_LLM_PROVIDER ?? "openai",
       baseUrl: process.env.INKOS_LLM_BASE_URL ?? "",
