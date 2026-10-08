@@ -18,6 +18,8 @@ docs/*
 !docs/fork-vi-support-guide.md
 !docs/viet-hoa-roadmap.md
 !docs/huong-dan-su-dung.md
+!docs/scripts/
+!docs/scripts/*.py
 novel-to-comic-research.docx
 .pnpm-store/
 tmp/
