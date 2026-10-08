@@ -1,6 +1,6 @@
 // Reader-facing labels and projections for canonical Work truth artifacts.
 
-import { getAppLanguage, tr } from "./app-language";
+import { getAppLanguage } from "./app-language";
 
 // First non-empty prose paragraph of a body, for an at-a-glance overview. A
 // leading markdown heading on the paragraph is dropped so the glance is prose.
@@ -45,13 +45,25 @@ const FOUNDATION_FILE_LABELS_EN: Record<string, string> = {
   "book_rules.md": "Narrative Rules",
 };
 
+const FOUNDATION_FILE_LABELS_VI: Record<string, string> = {
+  "outline/story_frame.md": "Nền Tảng Truyện",
+  "outline/volume_map.md": "Bản Đồ Tập",
+  "current_state.md": "Trạng Thái Hiện Tại",
+  "pending_hooks.md": "Kho Cài Cắm",
+  "book_rules.md": "Quy Tắc Kể",
+};
+
 // Language-aware display label for a foundation truth file. Returns undefined
 // for files that are not part of the foundation list (same qualification as
 // FOUNDATION_FILE_LABELS).
 export function foundationFileLabel(name: string): string | undefined {
   const zh = FOUNDATION_FILE_LABELS[name];
   if (zh === undefined) return undefined;
-  return getAppLanguage() === "en" ? FOUNDATION_FILE_LABELS_EN[name] ?? zh : zh;
+  const language = getAppLanguage();
+  if (language === "en") return FOUNDATION_FILE_LABELS_EN[name] ?? zh;
+  // Missing vi falls back to en, never to zh.
+  if (language === "vi") return FOUNDATION_FILE_LABELS_VI[name] ?? FOUNDATION_FILE_LABELS_EN[name] ?? zh;
+  return zh;
 }
 
 // --- current_state.md ---------------------------------------------------

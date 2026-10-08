@@ -4,6 +4,7 @@ import { fetchJson, useApi } from "../hooks/use-api";
 import type { Theme } from "../hooks/use-theme";
 import type { TFunction } from "../hooks/use-i18n";
 import { useColors } from "../hooks/use-colors";
+import { tr, type AppLanguage } from "../lib/app-language";
 
 interface Nav {
   toDashboard: () => void;
@@ -66,7 +67,7 @@ const PLATFORMS_EN: ReadonlyArray<PlatformOption> = [
   { value: "other", label: "Other" },
 ];
 
-const PAGE_COPY: Record<"zh" | "en", PlatformCopy> = {
+const PAGE_COPY: Record<AppLanguage, PlatformCopy> = {
   zh: {
     heading: "创建长篇 Work",
     hint: "这里提交的是明确建书动作。想先讨论和完善方向，请回到 Studio Chat 自然交流，确认卡会携带同一份结构化建书参数。",
@@ -101,7 +102,27 @@ const PAGE_COPY: Record<"zh" | "en", PlatformCopy> = {
     creationStatus: "Creating the Work. Its workspace will open when the artifact is ready.",
     creationSteps: ["Saving Work config", "Generating foundation", "Registering artifacts"],
   },
+  vi: {
+    heading: "Tạo Work dài kỳ",
+    hint: "Màn này gửi một hành động tạo sách dứt khoát. Muốn bàn hướng trước thì quay lại Studio Chat; thẻ xác nhận ở đó mang đúng cùng một bộ tham số tạo sách.",
+    titleLabel: "Tên sách",
+    titlePlaceholder: "Ví dụ: Sổ Nợ Cảng Đêm",
+    genreLabel: "Thể loại",
+    genrePlaceholder: "Ví dụ: trịnh thành thị, huyền huyễn, khoa học, ngôn tình",
+    platformLabel: "Nền tảng đích",
+    targetChaptersLabel: "Số chương mục tiêu",
+    chapterWordCountLabel: "Số từ mỗi chương",
+    briefLabel: "Giới thiệu / thiết định cốt",
+    briefPlaceholder: "Viết rõ thế giới, nhân vật chính, mục tiêu, xung đột cốt và hướng đi của giai đoạn đầu.",
+    createBook: "Tạo sách",
+    creatingBook: "Đang tạo…",
+    creationStatus: "Đang tạo Work. Xong sẽ tự mở khu làm việc của nó.",
+    creationSteps: ["Lưu cấu hình Work", "Sinh nền tảng", "Đăng ký sản phẩm"],
+  },
 };
+
+// Exported for the i18n regression test; the component itself indexes PAGE_COPY.
+export const PAGE_COPY_FOR_TEST: Record<AppLanguage, PlatformCopy> = PAGE_COPY;
 
 export function pickValidValue(current: string, available: ReadonlyArray<string>): string {
   return current && available.includes(current) ? current : available[0] ?? "";
@@ -201,10 +222,15 @@ export async function waitForBookReady(bookId: string, options: WaitForBookReady
 export function BookCreate({ nav, theme, t: _t }: { nav: Nav; theme: Theme; t: TFunction }) {
   const c = useColors(theme);
   const { data: project } = useApi<{ language: string }>("/project");
-  const projectLang = project?.language === "en" ? "en" : "zh";
-  const copy = PAGE_COPY[projectLang];
-  const platformChoices = platformOptionsForLanguage(projectLang);
-  const [form, setForm] = useState<BookCreateFormState>(() => defaultBookCreateForm(projectLang));
+  const uiLang: AppLanguage = project?.language === "en"
+    ? "en"
+    : project?.language === "vi" ? "vi" : "zh";
+  // Writing language, not display language: "vi" is not an option until the drafting
+  // agents can produce Vietnamese prose, so a vi project writes in English.
+  const contentLang: "zh" | "en" = uiLang === "zh" ? "zh" : "en";
+  const copy = PAGE_COPY[uiLang];
+  const platformChoices = platformOptionsForLanguage(contentLang);
+  const [form, setForm] = useState<BookCreateFormState>(() => defaultBookCreateForm(contentLang));
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
@@ -212,10 +238,10 @@ export function BookCreate({ nav, theme, t: _t }: { nav: Nav; theme: Theme; t: T
   useEffect(() => {
     setForm((current) => ({
       ...current,
-      platform: pickValidValue(current.platform, platformOptionsForLanguage(projectLang).map((option) => option.value)),
-      chapterWordCount: current.chapterWordCount || defaultChapterWordsForLanguage(projectLang),
+      platform: pickValidValue(current.platform, platformOptionsForLanguage(contentLang).map((option) => option.value)),
+      chapterWordCount: current.chapterWordCount || defaultChapterWordsForLanguage(contentLang),
     }));
-  }, [projectLang]);
+  }, [contentLang]);
 
   const updateForm = (patch: Partial<BookCreateFormState>) => setForm((current) => ({ ...current, ...patch }));
 
@@ -228,9 +254,15 @@ export function BookCreate({ nav, theme, t: _t }: { nav: Nav; theme: Theme; t: T
       const data = await fetchJson<{ bookId?: string }>("/books/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(buildBookCreatePayload(form, projectLang)),
+        body: JSON.stringify(buildBookCreatePayload(form, contentLang)),
       });
-      if (!data.bookId) throw new Error(projectLang === "zh" ? "创建动作没有返回 Work ID。" : "Creation did not return a Work ID.");
+      if (!data.bookId) {
+        throw new Error(tr(
+          "创建动作没有返回 Work ID。",
+          "Creation did not return a Work ID.",
+          "Hành động tạo không trả về Work ID.",
+        ));
+      }
       await waitForBookReady(data.bookId);
       nav.toBook(data.bookId);
     } catch (cause) {

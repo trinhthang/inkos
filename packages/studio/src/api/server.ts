@@ -220,9 +220,12 @@ async function resolveStudioProfileSkills(
 
 // -- Pipeline stage definitions per agent type --
 
-interface BilingualLabel {
+// vi is required, not optional: a closed table of short tool names, and these show
+// on every tool step header in chat, so let the compiler catch a missing one.
+interface ToolLabel {
   readonly zh: string;
   readonly en: string;
+  readonly vi: string;
 }
 
 function attachmentDisposition(fileName: string): string {
@@ -230,49 +233,65 @@ function attachmentDisposition(fileName: string): string {
   return `attachment; filename="${safeAscii}"; filename*=UTF-8''${encodeURIComponent(fileName)}`;
 }
 
-const TOOL_LABELS: Record<string, BilingualLabel> = {
-  read: { zh: "读取文件", en: "Read file" },
-  edit: { zh: "编辑文件", en: "Edit file" },
-  grep: { zh: "搜索", en: "Search" },
-  ls: { zh: "列目录", en: "List directory" },
-  propose_action: { zh: "确认动作", en: "Confirm action" },
-  short_fiction_run: { zh: "短篇生产", en: "Short fiction" },
-  script_create: { zh: "剧本创作", en: "Script creation" },
-  storyboard_create: { zh: "分镜创作", en: "Storyboard creation" },
-  interactive_film_create: { zh: "互动影游", en: "Interactive film" },
-  translation_create: { zh: "翻译项目", en: "Translation" },
-  fanfic_create: { zh: "同人创作", en: "Fanfiction" },
-  continuation_import: { zh: "导入续写", en: "Continuation import" },
-  spinoff_create: { zh: "番外创作", en: "Side story" },
-  imitation_create: { zh: "仿写创作", en: "Style imitation" },
-  generate_cover: { zh: "生成封面", en: "Cover generation" },
-  play_edit: { zh: "编辑互动世界", en: "Edit interactive world" },
-  play_start: { zh: "启动互动世界", en: "Start interactive world" },
-  play_revise: { zh: "重做互动回合", en: "Redo interactive turn" },
-  generate: { zh: "生成当前作品", en: "Generate current work" },
-  play_step: { zh: "推进互动世界", en: "Advance interactive world" },
-  create_book: { zh: "创建长篇", en: "Create long-form Work" },
-  revise_foundation: { zh: "重建设定", en: "Revise foundation" },
-  write_chapters: { zh: "写作章节", en: "Write chapters" },
-  review_chapter: { zh: "审查章节", en: "Review chapter" },
-  revise_chapter: { zh: "修订章节", en: "Revise chapter" },
-  export_book: { zh: "导出作品", en: "Export Work" },
-  create_narrative_forecast: { zh: "剧情多线推演", en: "Narrative forecast" },
-  get_narrative_forecast: { zh: "核验剧情推演", en: "Recheck forecast" },
-  select_narrative_branch: { zh: "采用候选分支", en: "Select candidate branch" },
+const TOOL_LABELS: Record<string, ToolLabel> = {
+  read: { zh: "读取文件", en: "Read file", vi: "Đọc file" },
+  edit: { zh: "编辑文件", en: "Edit file", vi: "Sửa file" },
+  grep: { zh: "搜索", en: "Search", vi: "Tìm kiếm" },
+  ls: { zh: "列目录", en: "List directory", vi: "Liệt kê thư mục" },
+  propose_action: { zh: "确认动作", en: "Confirm action", vi: "Xác nhận hành động" },
+  short_fiction_run: { zh: "短篇生产", en: "Short fiction", vi: "Sản xuất truyện ngắn" },
+  script_create: { zh: "剧本创作", en: "Script creation", vi: "Viết kịch bản" },
+  storyboard_create: { zh: "分镜创作", en: "Storyboard creation", vi: "Dựng storyboard" },
+  interactive_film_create: { zh: "互动影游", en: "Interactive film", vi: "Phim tương tác" },
+  translation_create: { zh: "翻译项目", en: "Translation", vi: "Dự án dịch" },
+  fanfic_create: { zh: "同人创作", en: "Fanfiction", vi: "Viết đồng nhân" },
+  continuation_import: { zh: "导入续写", en: "Continuation import", vi: "Nhập để viết tiếp" },
+  spinoff_create: { zh: "番外创作", en: "Side story", vi: "Viết ngoại truyện" },
+  imitation_create: { zh: "仿写创作", en: "Style imitation", vi: "Viết mô phỏng" },
+  generate_cover: { zh: "生成封面", en: "Cover generation", vi: "Sinh bìa" },
+  play_edit: { zh: "编辑互动世界", en: "Edit interactive world", vi: "Sửa thế giới tương tác" },
+  play_start: { zh: "启动互动世界", en: "Start interactive world", vi: "Mở thế giới tương tác" },
+  play_revise: { zh: "重做互动回合", en: "Redo interactive turn", vi: "Làm lại lượt tương tác" },
+  generate: { zh: "生成当前作品", en: "Generate current work", vi: "Sinh tác phẩm hiện tại" },
+  play_step: { zh: "推进互动世界", en: "Advance interactive world", vi: "Đẩy tiếp thế giới tương tác" },
+  create_book: { zh: "创建长篇", en: "Create long-form Work", vi: "Tạo Work dài kỳ" },
+  revise_foundation: { zh: "重建设定", en: "Revise foundation", vi: "Dựng lại nền tảng" },
+  write_chapters: { zh: "写作章节", en: "Write chapters", vi: "Viết chương" },
+  review_chapter: { zh: "审查章节", en: "Review chapter", vi: "Soát chương" },
+  revise_chapter: { zh: "修订章节", en: "Revise chapter", vi: "Chỉnh sửa chương" },
+  export_book: { zh: "导出作品", en: "Export Work", vi: "Xuất tác phẩm" },
+  create_narrative_forecast: { zh: "剧情多线推演", en: "Narrative forecast", vi: "Suy diễn đa tuyến" },
+  get_narrative_forecast: { zh: "核验剧情推演", en: "Recheck forecast", vi: "Kiểm lại suy diễn" },
+  select_narrative_branch: { zh: "采用候选分支", en: "Select candidate branch", vi: "Chọn nhánh ứng viên" },
 };
+
+/**
+ * Splits the one language value this endpoint used to carry into the two it actually
+ * needs. The project's language owns the CHROME; the book's own language owns the
+ * CONTENT. `requestedLanguage` is a content request from the client and must never
+ * reach a `pick()` call, or a client payload could change the UI language.
+ */
+export function resolveSurfaceLanguages(input: {
+  readonly configLanguage: unknown;
+  readonly bookLanguage: "zh" | "en" | undefined;
+  readonly requestedLanguage: "zh" | "en" | undefined;
+}): { readonly ui: StudioLanguage; readonly content: "zh" | "en" } {
+  const ui = normalizeStudioLanguage(input.configLanguage);
+  const content = input.bookLanguage ?? input.requestedLanguage ?? toContentLanguage(ui);
+  return { ui, content };
+}
 
 function resolveToolLabel(tool: string, _agent?: string, lang: StudioLanguage = "zh"): string {
   const label = TOOL_LABELS[tool];
-  return label ? pick(lang, label.zh, label.en) : tool;
+  return label ? pick(lang, label.zh, label.en, label.vi) : tool;
 }
 
 function formatTaskElapsed(ms: number, lang: StudioLanguage): string {
   const totalSeconds = Math.max(0, Math.floor(ms / 1000));
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
-  if (minutes === 0) return pick(lang, `${seconds} 秒`, `${seconds}s`);
-  return pick(lang, `${minutes} 分 ${seconds} 秒`, `${minutes}m ${seconds}s`);
+  if (minutes === 0) return pick(lang, `${seconds} 秒`, `${seconds}s`, `${seconds} giây`);
+  return pick(lang, `${minutes} 分 ${seconds} 秒`, `${minutes}m ${seconds}s`, `${minutes} phút ${seconds} giây`);
 }
 
 /**
@@ -283,11 +302,11 @@ function buildRunningTaskContextBlock(task: StudioTaskSnapshot, lang: StudioLang
   const exec = task.execution;
   const elapsed = formatTaskElapsed(Date.now() - exec.startedAt, lang);
   const status = exec.status === "processing"
-    ? pick(lang, "处理中", "processing")
-    : pick(lang, "运行中", "running");
+    ? pick(lang, "处理中", "processing", "đang xử lý")
+    : pick(lang, "运行中", "running", "đang chạy");
   const logsTail = (exec.logs ?? []).slice(-3);
   const logsBlock = logsTail.length > 0
-    ? `\n${pick(lang, "- 最近日志：", "- Recent logs:")}\n${logsTail.map((line) => `  - ${line}`).join("\n")}`
+    ? `\n${pick(lang, "- 最近日志：", "- Recent logs:", "- Log gần đây:")}\n${logsTail.map((line) => `  - ${line}`).join("\n")}`
     : "";
   return pick(
     lang,
@@ -306,6 +325,14 @@ function buildRunningTaskContextBlock(task: StudioTaskSnapshot, lang: StudioLang
       `- Status: ${status}`,
       `- Elapsed: ${elapsed}${logsBlock}`,
       "The task runs independently in the background; this chat turn does not interrupt it. When the user asks about its progress, answer truthfully from the information above. Do not start another production task of the same kind, and do not claim that no task is running. Production tools are temporarily unavailable and will be restored when the task finishes.",
+    ].join("\n"),
+    [
+      "## Trạng thái tác vụ chạy nền",
+      "Phiên này đang có một tác vụ sản xuất chạy nền:",
+      `- Tác vụ: ${exec.label} (${exec.tool})`,
+      `- Trạng thái: ${status}`,
+      `- Đã chạy: ${elapsed}${logsBlock}`,
+      "Tác vụ chạy độc lập ở nền; lượt đối thoại này không ngắt nó. Khi người dùng hỏi tiến độ, hãy trả lời đúng theo thông tin trên. Không khởi động thêm tác vụ sản xuất cùng loại, và không nói rằng không có tác vụ nào đang chạy. Các tool sản xuất tạm thời không dùng được và sẽ mở lại khi tác vụ kết thúc.",
     ].join("\n"),
   );
 }
@@ -446,7 +473,7 @@ function nonTextModelMessage(modelId: string, lang: StudioLanguage = "zh"): stri
   return pick(
     lang,
     `模型 ${modelId} 不适合文本聊天/写作。请在模型选择器中改用文本模型，例如 gemini-2.5-flash、gemini-2.5-pro 或对应服务的 chat 模型。`,
-    `Model ${modelId} is not suitable for text chat/writing. Pick a text model in the model selector, e.g. gemini-2.5-flash, gemini-2.5-pro, or the service's chat model.`,
+    `Model ${modelId} is not suitable for text chat/writing. Pick a text model in the model selector, e.g. gemini-2.5-flash, gemini-2.5-pro, or the service's chat model.`, `Model ${modelId} không phù hợp để chat/viết văn bản. Hãy chọn một model văn bản trong trình chọn model, ví dụ gemini-2.5-flash, gemini-2.5-pro, hoặc model chat của dịch vụ tương ứng.`,
   );
 }
 
@@ -995,7 +1022,7 @@ function validateAgentActionExecution(args: {
     return pick(
       lang,
       `已确认动作 ${binding.actionId}，但模型没有执行对应 capability action。请重试或检查模型工具调用支持。`,
-      `Action ${binding.actionId} was confirmed, but the model did not execute the matching capability action. Retry or check model tool-call support.`,
+      `Action ${binding.actionId} was confirmed, but the model did not execute the matching capability action. Retry or check model tool-call support.`, `Đã xác nhận hành động ${binding.actionId}, nhưng model không thực thi capability action tương ứng. Thử lại hoặc kiểm tra xem model có hỗ trợ gọi tool.`,
     );
   }
 
@@ -1016,7 +1043,7 @@ function formatAgentFailure(
   }
   return {
     code: "INKOS_ACTION_ERROR",
-    message: pick(lang, `InkOS 动作失败：${message}`, `InkOS action failed: ${message}`),
+    message: pick(lang, `InkOS 动作失败：${message}`, `InkOS action failed: ${message}`, `Hành động InkOS thất bại: ${message}`),
     status: 500,
   };
 }
@@ -1118,7 +1145,7 @@ function requirePayloadText(value: string | undefined, message: string): string 
 
 function toolResultText(result: unknown, lang: StudioLanguage = "zh"): string {
   const text = extractToolError(result).trim();
-  return text || pick(lang, "已完成。", "Done.");
+  return text || pick(lang, "已完成。", "Done.", "Hoàn tất.");
 }
 
 async function executeConfirmedProductionAction(args: {
@@ -1185,7 +1212,7 @@ async function executeConfirmedProductionAction(args: {
 
   if (args.requestedIntent === "create_book") {
     const payload = actionPayload?.createBook;
-    const title = requirePayloadText(payload?.title, pick(lang, "确认建书缺少书名，请重新生成确认卡。", "The book creation confirmation is missing a title. Regenerate the confirmation card."));
+    const title = requirePayloadText(payload?.title, pick(lang, "确认建书缺少书名，请重新生成确认卡。", "The book creation confirmation is missing a title. Regenerate the confirmation card.", "Thẻ xác nhận tạo sách thiếu tên sách. Hãy sinh lại thẻ xác nhận."));
     tool = createBookFoundationTool(args.pipeline, {
       language: toContentLanguage(lang),
       actionPayload,
@@ -1203,7 +1230,7 @@ async function executeConfirmedProductionAction(args: {
   } else if (args.requestedIntent === "short_run") {
     const payload = actionPayload?.shortRun;
     const direction = payload?.direction?.trim() || args.instruction.trim();
-    if (!direction) throw new ApiError(400, "CONFIRMED_ACTION_PAYLOAD_INCOMPLETE", pick(lang, "确认短篇缺少方向，请重新生成确认卡。", "The short fiction confirmation is missing a direction. Regenerate the confirmation card."));
+    if (!direction) throw new ApiError(400, "CONFIRMED_ACTION_PAYLOAD_INCOMPLETE", pick(lang, "确认短篇缺少方向，请重新生成确认卡。", "The short fiction confirmation is missing a direction. Regenerate the confirmation card.", "Thẻ xác nhận truyện ngắn thiếu hướng truyện. Hãy sinh lại thẻ xác nhận."));
     tool = createShortFictionRunTool(args.pipeline, args.root, {
       actionPayload,
       language: toContentLanguage(lang),
@@ -1219,7 +1246,7 @@ async function executeConfirmedProductionAction(args: {
     };
   } else if (args.requestedIntent === "write_next") {
     if (!args.bookId) {
-      throw new ApiError(400, "BOOK_ID_REQUIRED", pick(lang, "写下一章需要先打开一本书。", "Writing the next chapter requires an active book."));
+      throw new ApiError(400, "BOOK_ID_REQUIRED", pick(lang, "写下一章需要先打开一本书。", "Writing the next chapter requires an active book.", "Muốn viết chương kế tiếp thì phải mở một quyển sách trước."));
     }
     const chapterCount = actionPayload?.writeNext?.chapterCount ?? 1;
     tool = createWriteChaptersTool(args.pipeline, args.bookId, {
@@ -1237,7 +1264,7 @@ async function executeConfirmedProductionAction(args: {
     };
   } else if (args.requestedIntent === "generate_cover") {
     const payload = actionPayload?.generateCover;
-    const title = requirePayloadText(payload?.title, pick(lang, "确认生成封面缺少标题，请重新生成确认卡。", "The cover generation confirmation is missing a title. Regenerate the confirmation card."));
+    const title = requirePayloadText(payload?.title, pick(lang, "确认生成封面缺少标题，请重新生成确认卡。", "The cover generation confirmation is missing a title. Regenerate the confirmation card.", "Thẻ xác nhận sinh bìa thiếu tiêu đề. Hãy sinh lại thẻ xác nhận."));
     tool = createGenerateCoverTool(args.root, { actionPayload });
     params = {
       title,
@@ -1248,7 +1275,7 @@ async function executeConfirmedProductionAction(args: {
     };
   } else if (args.requestedIntent === "script_create") {
     const payload = actionPayload?.scriptCreate;
-    const title = requirePayloadText(payload?.title, pick(lang, "确认创建剧本缺少标题，请重新生成确认卡。", "The script creation confirmation is missing a title. Regenerate the confirmation card."));
+    const title = requirePayloadText(payload?.title, pick(lang, "确认创建剧本缺少标题，请重新生成确认卡。", "The script creation confirmation is missing a title. Regenerate the confirmation card.", "Thẻ xác nhận tạo kịch bản thiếu tiêu đề. Hãy sinh lại thẻ xác nhận."));
     tool = createScriptCreationTool(args.pipeline, args.root, {
       actionPayload,
       language: toContentLanguage(lang),
@@ -1268,7 +1295,7 @@ async function executeConfirmedProductionAction(args: {
     };
   } else if (args.requestedIntent === "storyboard_create") {
     const payload = actionPayload?.storyboardCreate;
-    const title = requirePayloadText(payload?.title, pick(lang, "确认创建分镜缺少标题，请重新生成确认卡。", "The storyboard creation confirmation is missing a title. Regenerate the confirmation card."));
+    const title = requirePayloadText(payload?.title, pick(lang, "确认创建分镜缺少标题，请重新生成确认卡。", "The storyboard creation confirmation is missing a title. Regenerate the confirmation card.", "Thẻ xác nhận dựng storyboard thiếu tiêu đề. Hãy sinh lại thẻ xác nhận."));
     tool = createStoryboardCreationTool(args.pipeline, args.root, {
       actionPayload,
       language: toContentLanguage(lang),
@@ -1289,7 +1316,7 @@ async function executeConfirmedProductionAction(args: {
     };
   } else if (args.requestedIntent === "interactive_film_create") {
     const payload = actionPayload?.interactiveFilmCreate;
-    const title = requirePayloadText(payload?.title, pick(lang, "确认创建互动影游缺少标题，请重新生成确认卡。", "The interactive film confirmation is missing a title. Regenerate the confirmation card."));
+    const title = requirePayloadText(payload?.title, pick(lang, "确认创建互动影游缺少标题，请重新生成确认卡。", "The interactive film confirmation is missing a title. Regenerate the confirmation card.", "Thẻ xác nhận tạo phim tương tác thiếu tiêu đề. Hãy sinh lại thẻ xác nhận."));
     tool = createInteractiveFilmCreationTool(args.pipeline, args.root, {
       actionPayload,
       language: toContentLanguage(lang),
@@ -1313,8 +1340,8 @@ async function executeConfirmedProductionAction(args: {
     const payload = actionPayload?.translationCreate;
     const filePath = payload?.filePath;
     if (!filePath && !payload?.sourceText) throw new ApiError(400, "TRANSLATION_SOURCE_REQUIRED", "Provide source text or a source file");
-    const sourceLanguage = requirePayloadText(payload?.sourceLanguage, pick(lang, "确认创建翻译项目缺少源语言，请重新生成确认卡。", "The translation confirmation is missing a source language. Regenerate the confirmation card."));
-    const targetLanguage = requirePayloadText(payload?.targetLanguage, pick(lang, "确认创建翻译项目缺少目标语言，请重新生成确认卡。", "The translation confirmation is missing a target language. Regenerate the confirmation card."));
+    const sourceLanguage = requirePayloadText(payload?.sourceLanguage, pick(lang, "确认创建翻译项目缺少源语言，请重新生成确认卡。", "The translation confirmation is missing a source language. Regenerate the confirmation card.", "Thẻ xác nhận tạo dự án dịch thiếu ngôn ngữ nguồn. Hãy sinh lại thẻ xác nhận."));
+    const targetLanguage = requirePayloadText(payload?.targetLanguage, pick(lang, "确认创建翻译项目缺少目标语言，请重新生成确认卡。", "The translation confirmation is missing a target language. Regenerate the confirmation card.", "Thẻ xác nhận tạo dự án dịch thiếu ngôn ngữ đích. Hãy sinh lại thẻ xác nhận."));
     tool = createTranslationCreateTool(args.root, { actionPayload });
     params = {
       filePath, sourceText: payload?.sourceText, glossary: payload?.glossary,
@@ -1325,9 +1352,9 @@ async function executeConfirmedProductionAction(args: {
     };
   } else if (args.requestedIntent === "fanfic_init") {
     const payload = actionPayload?.fanficCreate;
-    const title = requirePayloadText(payload?.title, pick(lang, "确认创建同人缺少书名，请补充后重新确认。", "The fanfiction confirmation is missing a title."));
+    const title = requirePayloadText(payload?.title, pick(lang, "确认创建同人缺少书名，请补充后重新确认。", "The fanfiction confirmation is missing a title.", "Thẻ xác nhận tạo đồng nhân thiếu tên sách."));
     if (!payload?.source && !payload?.sourceText?.trim() && !payload?.sourcePath?.trim()) {
-      throw new ApiError(400, "CONFIRMED_ACTION_PAYLOAD_INCOMPLETE", pick(lang, "创建同人需要原作资料或上传文件。", "Fanfiction creation requires source material or an uploaded file."));
+      throw new ApiError(400, "CONFIRMED_ACTION_PAYLOAD_INCOMPLETE", pick(lang, "创建同人需要原作资料或上传文件。", "Fanfiction creation requires source material or an uploaded file.", "Tạo đồng nhân cần tư liệu nguyên tác hoặc file tải lên."));
     }
     tool = createFanficBookTool(args.pipeline, args.root, {
       defaultSkills: mergeActivatedSkillGuidance(
@@ -1350,10 +1377,10 @@ async function executeConfirmedProductionAction(args: {
     };
   } else if (args.requestedIntent === "continuation_import") {
     const payload = actionPayload?.continuationImport;
-    const sourcePath = requirePayloadText(payload?.sourcePath, pick(lang, "导入续写需要上传文件或章节目录。", "Continuation import requires an uploaded file or chapter directory."));
+    const sourcePath = requirePayloadText(payload?.sourcePath, pick(lang, "导入续写需要上传文件或章节目录。", "Continuation import requires an uploaded file or chapter directory.", "Nhập để viết tiếp cần file tải lên hoặc thư mục chương."));
     const targetBookId = payload?.bookId ?? args.bookId ?? undefined;
     if (!targetBookId && !payload?.title?.trim()) {
-      throw new ApiError(400, "CONFIRMED_ACTION_PAYLOAD_INCOMPLETE", pick(lang, "导入续写需要选择已有书籍或填写新书名。", "Continuation import requires an existing book or a new title."));
+      throw new ApiError(400, "CONFIRMED_ACTION_PAYLOAD_INCOMPLETE", pick(lang, "导入续写需要选择已有书籍或填写新书名。", "Continuation import requires an existing book or a new title.", "Nhập để viết tiếp cần chọn sách có sẵn hoặc đặt tên sách mới."));
     }
     tool = createContinuationImportTool(args.pipeline, args.bookId, args.root, {
       defaultSkills: mergeActivatedSkillGuidance(
@@ -1377,8 +1404,8 @@ async function executeConfirmedProductionAction(args: {
     };
   } else if (args.requestedIntent === "spinoff_create") {
     const payload = actionPayload?.spinoffCreate;
-    const title = requirePayloadText(payload?.title, pick(lang, "确认创建番外缺少书名。", "The side-story confirmation is missing a title."));
-    const parentBookId = requirePayloadText(payload?.parentBookId ?? args.bookId ?? undefined, pick(lang, "创建番外需要指定正传书籍。", "Side-story creation requires a parent book."));
+    const title = requirePayloadText(payload?.title, pick(lang, "确认创建番外缺少书名。", "The side-story confirmation is missing a title.", "Thẻ xác nhận tạo ngoại truyện thiếu tên sách."));
+    const parentBookId = requirePayloadText(payload?.parentBookId ?? args.bookId ?? undefined, pick(lang, "创建番外需要指定正传书籍。", "Side-story creation requires a parent book.", "Tạo ngoại truyện cần chỉ rõ sách chính truyện."));
     tool = createSpinoffBookTool(args.pipeline, args.root, {
       defaultSkills: mergeActivatedSkillGuidance(
         profileSkills("longform-novel"),
@@ -1398,10 +1425,10 @@ async function executeConfirmedProductionAction(args: {
     };
   } else if (args.requestedIntent === "style_imitation") {
     const payload = actionPayload?.imitationCreate;
-    const title = requirePayloadText(payload?.title, pick(lang, "确认创建仿写缺少书名。", "The imitation confirmation is missing a title."));
-    const storyIdea = requirePayloadText(payload?.storyIdea, pick(lang, "仿写需要一个原创故事方向。", "Style imitation requires an original story idea."));
+    const title = requirePayloadText(payload?.title, pick(lang, "确认创建仿写缺少书名。", "The imitation confirmation is missing a title.", "Thẻ xác nhận tạo bản mô phỏng thiếu tên sách."));
+    const storyIdea = requirePayloadText(payload?.storyIdea, pick(lang, "仿写需要一个原创故事方向。", "Style imitation requires an original story idea.", "Viết mô phỏng cần một hướng truyện nguyên tác của riêng bạn."));
     if (!payload?.source && !payload?.referenceText?.trim() && !payload?.referencePath?.trim()) {
-      throw new ApiError(400, "CONFIRMED_ACTION_PAYLOAD_INCOMPLETE", pick(lang, "仿写需要参考文本或上传文件。", "Style imitation requires reference text or an uploaded file."));
+      throw new ApiError(400, "CONFIRMED_ACTION_PAYLOAD_INCOMPLETE", pick(lang, "仿写需要参考文本或上传文件。", "Style imitation requires reference text or an uploaded file.", "Viết mô phỏng cần văn bản tham chiếu hoặc file tải lên."));
     }
     tool = createImitationBookTool(args.pipeline, args.root, {
       defaultSkills: mergeActivatedSkillGuidance(
@@ -1424,7 +1451,7 @@ async function executeConfirmedProductionAction(args: {
     };
   } else if (args.requestedIntent === "play_start") {
     const payload = actionPayload?.playStart;
-    const title = requirePayloadText(payload?.title, pick(lang, "确认启动互动世界缺少标题，请重新生成确认卡。", "The interactive world start confirmation is missing a title. Regenerate the confirmation card."));
+    const title = requirePayloadText(payload?.title, pick(lang, "确认启动互动世界缺少标题，请重新生成确认卡。", "The interactive world start confirmation is missing a title. Regenerate the confirmation card.", "Thẻ xác nhận mở thế giới tương tác thiếu tiêu đề. Hãy sinh lại thẻ xác nhận."));
     const fallbackScene = [payload?.premise, args.instruction].filter((part): part is string => typeof part === "string" && part.trim().length > 0).join("\n\n");
     const initialScene = payload?.initialScene?.trim() || fallbackScene.trim();
     const confirmedActionPayload: ActionPayload | undefined = actionPayload
@@ -1466,7 +1493,7 @@ async function executeConfirmedProductionAction(args: {
   } else if (args.requestedIntent === "connect_choice") {
     const payload = actionPayload?.connectChoice;
     if (!payload?.node) {
-      throw new ApiError(400, "CONFIRMED_ACTION_PAYLOAD_INCOMPLETE", pick(lang, "确认连接选择缺少节点数据，请重新生成确认卡。", "The connect-choice confirmation is missing node data. Regenerate the confirmation card."));
+      throw new ApiError(400, "CONFIRMED_ACTION_PAYLOAD_INCOMPLETE", pick(lang, "确认连接选择缺少节点数据，请重新生成确认卡。", "The connect-choice confirmation is missing node data. Regenerate the confirmation card.", "Thẻ xác nhận nối lựa chọn thiếu dữ liệu node. Hãy sinh lại thẻ xác nhận."));
     }
     const projectId = payload?.projectId ?? args.bookId;
     if (!projectId) throw new ApiError(400, "INVALID_ID", "interactive-film action requires a project id (bookId)");
@@ -1477,7 +1504,7 @@ async function executeConfirmedProductionAction(args: {
   } else if (args.requestedIntent === "remove_node") {
     const payload = actionPayload?.removeNode;
     if (!payload?.nodeId) {
-      throw new ApiError(400, "CONFIRMED_ACTION_PAYLOAD_INCOMPLETE", pick(lang, "确认删除节点缺少 nodeId，请重新生成确认卡。", "The remove-node confirmation is missing a nodeId. Regenerate the confirmation card."));
+      throw new ApiError(400, "CONFIRMED_ACTION_PAYLOAD_INCOMPLETE", pick(lang, "确认删除节点缺少 nodeId，请重新生成确认卡。", "The remove-node confirmation is missing a nodeId. Regenerate the confirmation card.", "Thẻ xác nhận xóa node thiếu nodeId. Hãy sinh lại thẻ xác nhận."));
     }
     const projectId = payload?.projectId ?? args.bookId;
     if (!projectId) throw new ApiError(400, "INVALID_ID", "interactive-film action requires a project id (bookId)");
@@ -2142,7 +2169,7 @@ async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: str
       promise,
       new Promise<never>((_, reject) => {
         timeout = setTimeout(
-          () => reject(new Error(pick(lang, `${label} 超时（${timeoutMs}ms）`, `${label} timed out (${timeoutMs}ms)`))),
+          () => reject(new Error(pick(lang, `${label} 超时（${timeoutMs}ms）`, `${label} timed out (${timeoutMs}ms)`, `${label} quá thời gian chờ (${timeoutMs}ms)`))),
           timeoutMs,
         );
       }),
@@ -2175,42 +2202,42 @@ function formatServiceProbeError(args: {
       ? "Responses"
       : "Chat / Completions";
   const streamSuffix = typeof args.stream === "boolean"
-    ? pick(lang, `，${args.stream ? "流式" : "非流式"}`, `, ${args.stream ? "streaming" : "non-streaming"}`)
+    ? pick(lang, `，${args.stream ? "流式" : "非流式"}`, `, ${args.stream ? "streaming" : "non-streaming"}`, `, ${args.stream ? "có stream" : "không stream"}`)
     : "";
   const context = [
-    pick(lang, `服务商：${args.label ?? args.service}`, `Service: ${args.label ?? args.service}`),
-    pick(lang, `测试模型：${args.model ?? "未确定"}`, `Test model: ${args.model ?? "undetermined"}`),
-    pick(lang, `协议：${protocol}${streamSuffix}`, `Protocol: ${protocol}${streamSuffix}`),
-    pick(lang, `Base URL：${args.baseUrl}`, `Base URL: ${args.baseUrl}`),
+    pick(lang, `服务商：${args.label ?? args.service}`, `Service: ${args.label ?? args.service}`, `Dịch vụ: ${args.label ?? args.service}`),
+    pick(lang, `测试模型：${args.model ?? "未确定"}`, `Test model: ${args.model ?? "undetermined"}`, `Model dùng để kiểm tra: ${args.model ?? "chưa xác định"}`),
+    pick(lang, `协议：${protocol}${streamSuffix}`, `Protocol: ${protocol}${streamSuffix}`, `Giao thức: ${protocol}${streamSuffix}`),
+    pick(lang, `Base URL：${args.baseUrl}`, `Base URL: ${args.baseUrl}`, `Base URL: ${args.baseUrl}`),
   ].join("\n");
   const upstreamPrefix = (detail: string): string =>
-    pick(lang, `\n上游返回：${detail}`, `\nUpstream response: ${detail}`);
+    pick(lang, `\n上游返回：${detail}`, `\nUpstream response: ${detail}`, `\nPhản hồi tứ dịch vụ: ${detail}`);
 
   if (args.service === "google") {
     return [
-      pick(lang, "Google Gemini 测试连接失败。", "Google Gemini connection test failed."),
+      pick(lang, "Google Gemini 测试连接失败。", "Google Gemini connection test failed.", "Kiểm tra kết nối Google Gemini thất bại."),
       context,
       "",
-      pick(lang, "请优先检查：", "Check these first:"),
+      pick(lang, "请优先检查：", "Check these first:", "Hãy kiểm tra trước các điểm sau:"),
       pick(
         lang,
         "1. API Key 是否来自 Google AI Studio 的 Gemini API key，而不是 OAuth、Vertex AI 或其它 Google 服务凭据。",
-        "1. The API Key is a Gemini API key from Google AI Studio, not an OAuth, Vertex AI, or other Google service credential.",
+        "1. The API Key is a Gemini API key from Google AI Studio, not an OAuth, Vertex AI, or other Google service credential.", "1. API key có phải là Gemini API key lấy từ Google AI Studio, chứ không phải thông tin xác thực OAuth, Vertex AI hay dịch vụ Google khác.",
       ),
       pick(
         lang,
         "2. 该 key 所属项目是否已启用 Gemini API，并且没有被限制到其它 API、来源或服务。",
-        "2. The key's project has the Gemini API enabled and is not restricted to other APIs, origins, or services.",
+        "2. The key's project has the Gemini API enabled and is not restricted to other APIs, origins, or services.", "2. Project chứa key đó đã bật Gemini API và không bị giới hạn sang API, nguồn gốc hoặc dịch vụ khác.",
       ),
       pick(
         lang,
         "3. 当前地区/账号是否允许访问 Gemini API。",
-        "3. Your region/account is allowed to access the Gemini API.",
+        "3. Your region/account is allowed to access the Gemini API.", "3. Khu vực và tài khoản hiện tại có được phép dùng Gemini API.",
       ),
       pick(
         lang,
         "4. 如果 key 曾经泄露，请在 AI Studio 重新生成后再保存。",
-        "4. If the key was ever leaked, regenerate it in AI Studio before saving.",
+        "4. If the key was ever leaked, regenerate it in AI Studio before saving.", "4. Nếu key từng bị lộ, hãy tạo lại trong AI Studio rồi mới lưu.",
       ),
       upstreamDetail ? upstreamPrefix(upstreamDetail) : "",
     ].filter(Boolean).join("\n");
@@ -2218,26 +2245,26 @@ function formatServiceProbeError(args: {
 
   if (args.service === "moonshot" || args.service === "kimiCodingPlan" || args.service === "kimicode") {
     return [
-      pick(lang, `${args.label ?? args.service} 测试连接失败。`, `${args.label ?? args.service} connection test failed.`),
+      pick(lang, `${args.label ?? args.service} 测试连接失败。`, `${args.label ?? args.service} connection test failed.`, `Kiểm tra kết nối ${args.label ?? args.service} thất bại.`),
       context,
       "",
       pick(
         lang,
         "请优先检查模型是否可用，以及 kimi-k2.x 这类模型是否需要 temperature=1。",
-        "Check first whether the model is available, and whether models like kimi-k2.x require temperature=1.",
+        "Check first whether the model is available, and whether models like kimi-k2.x require temperature=1.", "Kiểm tra trước xem model có dùng được không, và các model như kimi-k2.x có cần temperature=1 không.",
       ),
       rawDetail ? upstreamPrefix(rawDetail) : "",
     ].filter(Boolean).join("\n");
   }
 
   return [
-    pick(lang, `${args.label ?? args.service} 测试连接失败。`, `${args.label ?? args.service} connection test failed.`),
+    pick(lang, `${args.label ?? args.service} 测试连接失败。`, `${args.label ?? args.service} connection test failed.`, `Kiểm tra kết nối ${args.label ?? args.service} thất bại.`),
     context,
     "",
     pick(
       lang,
       "请检查 API Key、模型可用性、账号额度，以及协议类型是否匹配该服务商。",
-      "Check the API Key, model availability, account quota, and whether the protocol type matches this service.",
+      "Check the API Key, model availability, account quota, and whether the protocol type matches this service.", "Kiểm tra API key, model có dùng được, hạn mức tài khoản, và loại giao thức có khớp với dịch vụ này.",
     ),
     rawDetail ? upstreamPrefix(rawDetail) : "",
   ].filter(Boolean).join("\n");
@@ -2269,7 +2296,7 @@ async function fetchModelsFromServiceBaseUrl(
         error: pick(
           lang,
           `服务商返回 ${res.status}: ${body}`,
-          `Service returned ${res.status}: ${body}`,
+          `Service returned ${res.status}: ${body}`, `Dịch vụ trả về ${res.status}: ${body}`,
         ),
         authFailed: res.status === 401 || res.status === 403,
       };
@@ -2293,7 +2320,7 @@ function buildBearerAuthHeaders(apiKey: string | undefined, lang: StudioLanguage
     throw new Error(pick(
       lang,
       "API Key 只能包含英文、数字和常见 ASCII 符号，请检查是否误粘贴了中文说明。",
-      "API Key may only contain ASCII letters, digits, and common symbols. Check whether you pasted explanatory text by mistake.",
+      "API Key may only contain ASCII letters, digits, and common symbols. Check whether you pasted explanatory text by mistake.", "API key chỉ được chứa chữ Latin, chữ số và các ký hiệu ASCII thông dụng. Kiểm tra xem có dán lẫn phần chú thích không.",
     ));
   }
   return { Authorization: `Bearer ${trimmed}` };
@@ -2329,7 +2356,7 @@ async function probeServiceCapabilities(args: {
       error: modelsResponse.error ?? pick(
         lang,
         "API Key 无效或无权访问模型列表。",
-        "API Key is invalid or has no access to the model list.",
+        "API Key is invalid or has no access to the model list.", "API key không hợp lệ, hoặc không có quyền xem danh sách model.",
       ),
     };
   }
@@ -2347,7 +2374,7 @@ async function probeServiceCapabilities(args: {
         error: pick(
           lang,
           "模型列表可访问，但没有发现可用于文本对话的模型。",
-          "The model list is reachable, but no model usable for text chat was found.",
+          "The model list is reachable, but no model usable for text chat was found.", "Đọc được danh sách model, nhưng không thấy model nào dùng được để chat văn bản.",
         ),
       };
     }
@@ -2412,12 +2439,12 @@ async function probeServiceCapabilities(args: {
       error: pick(
         lang,
         "无法自动确定模型，请先填写可用模型或提供支持 /models 的服务端点。",
-        "Could not determine a model automatically. Fill in an available model first, or provide a service endpoint that supports /models.",
+        "Could not determine a model automatically. Fill in an available model first, or provide a service endpoint that supports /models.", "Không tự xác định được model. Hãy nhập một model dùng được, hoặc cấp endpoint dịch vụ có hỗ trợ /models.",
       ),
     };
   }
 
-  let lastError = modelsResponse.error ?? pick(lang, "自动探测失败", "Automatic probing failed");
+  let lastError = modelsResponse.error ?? pick(lang, "自动探测失败", "Automatic probing failed", "Dò tự động thất bại");
 
   for (const model of modelCandidates) {
     for (const plan of buildProbePlans(args.preferredApiFormat, args.preferredStream)) {
@@ -2584,7 +2611,7 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
         error: pick(
           lang,
           "任务已中断：Studio 服务在任务运行期间重启，任务未能继续。请重新发起。",
-          "Task interrupted: the Studio server restarted while this task was running. Please start it again.",
+          "Task interrupted: the Studio server restarted while this task was running. Please start it again.", "Tác vụ bị ngắt: server Studio khởi động lại trong lúc tác vụ đang chạy. Hãy chạy lại.",
         ),
         completedAt,
       },
@@ -3509,7 +3536,7 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
         error: pick(
           await currentProjectLanguage(),
           "未检测到可导入的 LLM 环境变量配置，或缺少 INKOS_LLM_API_KEY。",
-          "No importable LLM environment variable configuration was detected, or INKOS_LLM_API_KEY is missing.",
+          "No importable LLM environment variable configuration was detected, or INKOS_LLM_API_KEY is missing.", "Không phát hiện cấu hình LLM nào trong biến môi trường để nhập, hoặc thiếu INKOS_LLM_API_KEY.",
         ),
       }, 400);
     }
@@ -3568,7 +3595,7 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
         error: pick(
           await currentProjectLanguage(),
           "Studio 运行时不支持切换到 env；env 只在 CLI/daemon/部署运行时作为覆盖层使用。",
-          "The Studio runtime does not support switching to env; env only acts as an override layer in the CLI/daemon/deployment runtimes.",
+          "The Studio runtime does not support switching to env; env only acts as an override layer in the CLI/daemon/deployment runtimes.", "Runtime của Studio không hỗ trợ chuyển sang env; env chỉ là lớp ghi đè trong runtime của CLI, daemon và môi trường triển khai.",
         ),
       }, 400);
     }
@@ -3630,7 +3657,7 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
         error: pick(
           await currentProjectLanguage(),
           "封面 Base URL 必须是有效的 HTTP(S) 地址，且不能包含账号、查询参数或锚点。",
-          "Cover Base URL must be a valid HTTP(S) URL without credentials, query parameters, or fragments.",
+          "Cover Base URL must be a valid HTTP(S) URL without credentials, query parameters, or fragments.", "Base URL của bìa phải là địa chỉ HTTP(S) hợp lệ, không chứa thông tin đăng nhập, tham số truy vấn hay phần neo.",
         ),
       }, 400);
     }
@@ -3668,7 +3695,7 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
         error: pick(
           await currentProjectLanguage(),
           "API Key 包含不能放入 HTTP Authorization header 的字符，请只粘贴原始密钥。",
-          "API Key contains characters that cannot go into an HTTP Authorization header. Paste only the raw key.",
+          "API Key contains characters that cannot go into an HTTP Authorization header. Paste only the raw key.", "API key chứa ký tự không đặt được vào HTTP Authorization header. Chỉ dán đúng phần khóa gốc.",
         ),
       }, 400);
     }
@@ -3722,7 +3749,7 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
     if (!resolvedBaseUrl) {
       return c.json({
         ok: false,
-        error: pick(language, `未知服务商: ${service}`, `Unknown service: ${service}`),
+        error: pick(language, `未知服务商: ${service}`, `Unknown service: ${service}`, `Dịch vụ lạ: ${service}`),
       }, 400);
     }
 
@@ -3734,7 +3761,7 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
     if (!apiKey?.trim() && !apiKeyOptional) {
       return c.json({
         ok: false,
-        error: pick(language, "API Key 不能为空", "API Key must not be empty"),
+        error: pick(language, "API Key 不能为空", "API Key must not be empty", "API key không được để trống"),
       }, 400);
     }
 
@@ -3753,7 +3780,7 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
     });
 
     // B12: 升级响应 shape 为 { probe, chat, ... }，同时保留老字段供 UI 过渡期兼容
-    const connectionFailed = pick(language, "连接失败", "Connection failed");
+    const connectionFailed = pick(language, "连接失败", "Connection failed", "Kết nối thất bại");
     const probeStatus = {
       ok: probe.ok,
       models: probe.models?.length ?? 0,
@@ -3798,7 +3825,7 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
           error: pick(
             await currentProjectLanguage(),
             "API Key 只能包含可放进 HTTP Authorization header 的非空白 ASCII 字符；请不要粘贴连接失败提示或诊断文本。",
-            "API Key may only contain non-whitespace ASCII characters that fit in an HTTP Authorization header; do not paste connection failure hints or diagnostic text.",
+            "API Key may only contain non-whitespace ASCII characters that fit in an HTTP Authorization header; do not paste connection failure hints or diagnostic text.", "API key chỉ được chứa ký tự ASCII không phải khoảng trắng và đặt được vào HTTP Authorization header; đừng dán thông báo lỗi kết nối hay văn bản chẩn đoán.",
           ),
         }, 400);
       }
@@ -4812,12 +4839,15 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
           else throw new ApiError(404, "BOOK_NOT_FOUND", `Book not found: ${agentBookId}`);
         }
       }
-      const configLanguage = config.language === "en" ? "en" : "zh";
       const bookLanguage = activeBookConfig?.language === "en" ? "en" : activeBookConfig?.language === "zh" ? "zh" : undefined;
       const requestedLanguage = actionPayload?.shortRun?.language ?? actionPayload?.createBook?.language;
-      const surfaceLanguage = agentBookId
-        ? (bookLanguage ?? configLanguage)
-        : (requestedLanguage ?? configLanguage);
+      // Chrome follows the project, content follows the book. Before this split one
+      // value did both and coerced "vi" to "zh", so a vi project got Chinese chrome.
+      const { ui: uiLanguage, content: contentLanguage } = resolveSurfaceLanguages({
+        configLanguage: config.language,
+        bookLanguage: agentBookId ? bookLanguage : undefined,
+        requestedLanguage: agentBookId ? undefined : requestedLanguage,
+      });
       const streamSessionId = loadedBookSession.sessionId;
       const titleBeforeRun = bookSession.title;
       let sessionTitleBroadcasted = false;
@@ -4854,11 +4884,11 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
         } catch (e: unknown) {
           if (e instanceof ServiceApiKeyNotFoundError) {
             return c.json({
-              error: pick(language, `请先为 ${reqService} 配置 API Key`, `Configure an API Key for ${reqService} first`),
+              error: pick(language, `请先为 ${reqService} 配置 API Key`, `Configure an API Key for ${reqService} first`, `Hãy cấu hình API key cho ${reqService} trước`),
               response: pick(
                 language,
                 `请先在模型配置中为 ${reqService} 填写 API Key，然后再试。`,
-                `Fill in an API Key for ${reqService} in the model settings, then try again.`,
+                `Fill in an API Key for ${reqService} in the model settings, then try again.`, `Hãy nhập API key cho ${reqService} trong phần cấu hình model, rồi thử lại.`,
               ),
             }, 400);
           }
@@ -4962,9 +4992,9 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
       if (confirmedIntent && confirmedTaskId) {
         const productionTaskBusyResponse = () => {
           const message = pick(
-            surfaceLanguage,
+            uiLanguage,
             "当前会话已有一个生产任务在运行，请等它完成，或先用停止按钮结束它，再发起新任务。",
-            "A production task is already running in this session. Wait for it to finish, or stop it first, then start a new task.",
+            "A production task is already running in this session. Wait for it to finish, or stop it first, then start a new task.", "Phiên này đang có một tác vụ sản xuất chạy. Hãy chờ nó xong, hoặc bấm nút dừng để kết thúc, rồi mới chạy tác vụ mới.",
           );
           return c.json({
             error: { code: "PRODUCTION_TASK_ALREADY_RUNNING", message },
@@ -5032,7 +5062,7 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
             actionPayload,
             requestedSkills,
             disabledSkills,
-            language: surfaceLanguage,
+            language: contentLanguage,
             taskId,
             sourceRequestId,
             signal: taskController.signal,
@@ -5051,7 +5081,7 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
             createdBookId = resolveCreatedBookIdFromToolExecs([exec]);
             if (createdBookId) {
               if (!await completeBookExists(join(workDirectory(root, createdBookId), "source"))) {
-                const message = pick(surfaceLanguage, "创作工具返回了建书结果，但磁盘上的书籍工件不完整。", "The creation tool returned a book result, but the on-disk book artifact is incomplete.");
+                const message = pick(uiLanguage, "创作工具返回了建书结果，但磁盘上的书籍工件不完整。", "The creation tool returned a book result, but the on-disk book artifact is incomplete.", "Tool sáng tác trả về kết quả tạo sách, nhưng sản phẩm sách trên đĩa chưa đầy đủ.");
                 bookCreateStatus.set(createdBookId, { status: "error", error: message });
                 broadcast("book:error", { bookId: createdBookId, sessionId: bookSession.sessionId, error: message });
                 throw new ApiError(500, "BOOK_CREATION_INCOMPLETE", message);
@@ -5076,7 +5106,7 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
           taskController.signal.throwIfAborted();
           exec.status = "running";
           exec.completedAt = undefined;
-          exec.logs = [...(exec.logs ?? []), pick(surfaceLanguage, "继续完成确认请求中的剩余动作…", "Continuing the remaining confirmed request...")].slice(-80);
+          exec.logs = [...(exec.logs ?? []), pick(uiLanguage, "继续完成确认请求中的剩余动作…", "Continuing the remaining confirmed request...", "Đang làm nốt các hành động còn lại trong yêu cầu đã xác nhận…")].slice(-80);
           await persistConfirmedTask(bookSession.sessionId, confirmedIntent, exec, sourceRequestId);
           const continuation = await runAgentSession({
             onWorkTransition: publishExecutionTarget,
@@ -5097,7 +5127,7 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
             disabledSkills,
             attachments: [],
             sessionId: bookSession.sessionId,
-            language: surfaceLanguage,
+            language: contentLanguage,
             resumeAction: {
               toolCallId: exec.id,
               capabilityId: confirmedOutcome.binding.capabilityId,
@@ -5126,7 +5156,7 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
                 const toolExec: CollectedToolExec = {
                   id: event.toolCallId,
                   tool: actionId,
-                  label: resolveToolLabel(actionId, undefined, surfaceLanguage),
+                  label: resolveToolLabel(actionId, undefined, uiLanguage),
                   status: "running",
                   args: event.args as Record<string, unknown> | undefined,
                   startedAt: Date.now(),
@@ -5171,7 +5201,7 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
           if (continuation.errorMessage) {
             exec.logs = [
               ...(exec.logs ?? []),
-              pick(surfaceLanguage, `后续对话不可用：${continuation.errorMessage}`, `Follow-up response unavailable: ${continuation.errorMessage}`),
+              pick(uiLanguage, `后续对话不可用：${continuation.errorMessage}`, `Follow-up response unavailable: ${continuation.errorMessage}`, `Không có phản hồi tiếp theo: ${continuation.errorMessage}`),
             ].slice(-80);
             exec.details = {
               ...(exec.details && typeof exec.details === "object" ? exec.details as Record<string, unknown> : {}),
@@ -5181,7 +5211,7 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
           await persistConfirmedTask(bookSession.sessionId, confirmedIntent, exec, sourceRequestId);
           const responseText = continuation.responseText
             || exec.result
-            || pick(surfaceLanguage, "已完成。", "Done.");
+            || pick(uiLanguage, "已完成。", "Done.", "Hoàn tất.");
           const responseForUser = continuation.responseText
             ? continuation.responseText
             : hasDomainOwnedResult(exec.details) ? "" : responseText;
@@ -5197,7 +5227,7 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
           });
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
-          const failure = formatAgentActionFailure(error, surfaceLanguage);
+          const failure = formatAgentActionFailure(error, uiLanguage);
           if (pendingBookId) {
             bookCreateStatus.set(pendingBookId, { status: "error", error: message });
             broadcast("book:error", { bookId: pendingBookId, sessionId: streamSessionId, error: message });
@@ -5255,7 +5285,7 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
           pipeline,
           ...(backgroundTask
             ? {
-                backgroundTaskContext: buildRunningTaskContextBlock(backgroundTask, surfaceLanguage),
+                backgroundTaskContext: buildRunningTaskContextBlock(backgroundTask, uiLanguage),
                 suppressProductionTools: true,
               }
             : {}),
@@ -5273,7 +5303,7 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
           disabledSkills,
           attachments,
           sessionId: bookSession.sessionId,
-          language: surfaceLanguage,
+          language: contentLanguage,
           onContextCompression: (event) => {
             broadcast("context:compression", {
               sessionId: streamSessionId,
@@ -5474,7 +5504,7 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
         const emptyMessage = pick(
           language,
           "模型未返回文本内容。请检查协议类型（chat/responses）、流式开关或上游服务兼容性。",
-          "The model returned no text content. Check the protocol type (chat/responses), the streaming switch, or upstream service compatibility.",
+          "The model returned no text content. Check the protocol type (chat/responses), the streaming switch, or upstream service compatibility.", "Model không trả về nội dung chữ. Kiểm tra loại giao thức (chat/responses), công tắc stream, hoặc mức tương thích của dịch vụ phía trên.",
         );
         if (resolveCreatedBookIdFromToolExecs(collectedToolExecs)) {
           await finalizeCreatedBook();
@@ -5938,7 +5968,9 @@ export function createStudioServer(initialConfig: ProjectConfig, root: string, o
         projectRoot: root,
         referenceText: text,
         sourceName: sourceName ?? "unknown",
-        language: language ?? (config.language === "en" ? "en" : "zh"),
+        // Writing language for the style guide. Raw coercion sent "vi" to zh;
+        // toContentLanguage sends it to en, matching every other content path.
+        language: language ?? toContentLanguage(normalizeStudioLanguage(config.language)),
       });
       return c.json({ guide });
     } catch (e) {
